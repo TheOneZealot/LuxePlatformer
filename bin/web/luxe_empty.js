@@ -59,6 +59,7 @@ AABBPhysics.__super__ = luxe_PhysicsEngine;
 AABBPhysics.prototype = $extend(luxe_PhysicsEngine.prototype,{
 	init: function() {
 		this.staticBodies = [];
+		this.pointTests = [];
 	}
 	,render: function() {
 		if(!this.get_draw()) return;
@@ -68,7 +69,33 @@ AABBPhysics.prototype = $extend(luxe_PhysicsEngine.prototype,{
 			var rect = _g1[_g];
 			++_g;
 			Luxe.draw.rectangle({ immediate : true, rect : rect, color : new phoenix_Color(1,1,1,1)});
+			var _g2 = 0;
+			var _g3 = this.pointTests;
+			while(_g2 < _g3.length) {
+				var point = _g3[_g2];
+				++_g2;
+				var hit = RectangleExt.intersectPoint(rect,point);
+				var pointColor = new phoenix_Color(0,1,0,1);
+				if(hit.hit) {
+					Luxe.draw.box({ immediate : true, rect : new phoenix_Rectangle(hit.pos.x - 1,hit.pos.y - 1,2,2), color : new phoenix_Color(1,0,0,1)});
+					pointColor = new phoenix_Color(1,1,0,1);
+				}
+				Luxe.draw.box({ immediate : true, rect : new phoenix_Rectangle(point.x - 1,point.y - 1,2,2), color : pointColor});
+			}
+			this.pointTests = [];
 		}
+	}
+	,intersectPoint: function(point) {
+		this.pointTests = this.pointTests.concat([point]);
+		var hit = { hit : false, collider : new phoenix_Rectangle(), pos : new phoenix_Vector(), normal : new phoenix_Vector(), delta : new phoenix_Vector()};
+		var _g = 0;
+		var _g1 = this.staticBodies;
+		while(_g < _g1.length) {
+			var rect = _g1[_g];
+			++_g;
+			if(hit.hit) return hit;
+		}
+		return hit;
 	}
 	,__class__: AABBPhysics
 });
@@ -418,12 +445,12 @@ Main.prototype = $extend(luxe_Game.prototype,{
 		return config;
 	}
 	,ready: function() {
-		Main.physics = Luxe.physics.add_engine(AABBPhysics);
 		var parcel = new luxe_Parcel({ });
 		new luxe_ParcelProgress({ parcel : parcel, background : new phoenix_Color(1,1,1,0.85), oncomplete : $bind(this,this.assetsloaded)});
 		parcel.load();
 	}
 	,assetsloaded: function(_) {
+		Main.physics = Luxe.physics.add_engine(AABBPhysics);
 		this.player = new luxe_Sprite({ name : "player", pos : new phoenix_Vector(64,64), color : new phoenix_Color().rgb(16337668), size : new phoenix_Vector(128,128)});
 		this.collider = new phoenix_Rectangle();
 		this.collider.set(256,256,256,256);
@@ -432,6 +459,9 @@ Main.prototype = $extend(luxe_Game.prototype,{
 		Luxe.input.bind_key("left",97);
 		Luxe.input.bind_key("down",115);
 		Luxe.input.bind_key("right",100);
+	}
+	,onmousemove: function(e) {
+		this.mpos = e.pos;
 	}
 	,onkeyup: function(e) {
 		if(e.keycode == 27) Luxe.core.shutdown();
@@ -454,10 +484,47 @@ Main.prototype = $extend(luxe_Game.prototype,{
 			var _g3 = this.player.get_pos();
 			_g3.set_x(_g3.x + this.speed * dt);
 		}
+		if(this.mpos != null) this.hit = Main.physics.intersectPoint(this.mpos);
 	}
 	,__class__: Main
 });
 Math.__name__ = ["Math"];
+var RectangleExt = function() { };
+$hxClasses["RectangleExt"] = RectangleExt;
+RectangleExt.__name__ = ["RectangleExt"];
+RectangleExt.mid = function(rect) {
+	return new phoenix_Vector(rect.x + rect.w / 2,rect.y + rect.h / 2);
+};
+RectangleExt.half = function(rect) {
+	return new phoenix_Vector(rect.w / 2,rect.h / 2,null,null);
+};
+RectangleExt.intersectPoint = function(rect,point) {
+	var hitResult = { hit : false, collider : rect, pos : new phoenix_Vector(), normal : new phoenix_Vector(), delta : new phoenix_Vector()};
+	var dx = point.x - RectangleExt.mid(rect).x;
+	var px = RectangleExt.half(rect).x - Math.abs(dx);
+	if(px <= 0) return hitResult;
+	var dy = point.y - RectangleExt.mid(rect).y;
+	var py = RectangleExt.half(rect).y - Math.abs(dy);
+	if(py <= 0) return hitResult;
+	if(py > px) {
+		var sx;
+		if(dx < 0) sx = -1; else sx = 1;
+		hitResult.hit = true;
+		hitResult.delta.set_x(px * sx);
+		hitResult.normal.set_x(sx);
+		hitResult.pos.set_x(RectangleExt.mid(rect).x + RectangleExt.half(rect).x * sx);
+		hitResult.pos.set_y(point.y);
+	} else {
+		var sy;
+		if(dy < 0) sy = -1; else sy = 1;
+		hitResult.hit = true;
+		hitResult.delta.set_y(py * sy);
+		hitResult.normal.set_y(sy);
+		hitResult.pos.set_y(RectangleExt.mid(rect).y + RectangleExt.half(rect).y * sy);
+		hitResult.pos.set_x(point.x);
+	}
+	return hitResult;
+};
 var Reflect = function() { };
 $hxClasses["Reflect"] = Reflect;
 Reflect.__name__ = ["Reflect"];

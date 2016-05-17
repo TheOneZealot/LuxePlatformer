@@ -27,9 +27,10 @@ class RectangleExt
         var py:Float = rect.half().y - Math.abs(dy);
         if( py <= 0 ) return hitResult;
 
-        if( py < px )
+        if( py > px )
         {
             var sx:Float = if (dx < 0) -1 else 1;
+            hitResult.hit = true;
             hitResult.delta.x = px * sx;
             hitResult.normal.x = sx;
             hitResult.pos.x = rect.mid().x + rect.half().x * sx;
@@ -38,9 +39,12 @@ class RectangleExt
         else
         {
             var sy:Float = if (dy < 0) -1 else 1;
-            
+            hitResult.hit = true;
+            hitResult.delta.y = py * sy;
+            hitResult.normal.y = sy;
+            hitResult.pos.y = rect.mid().y + rect.half().y * sy;
+            hitResult.pos.x = point.x;
         }
-
         return hitResult;
     }
 }

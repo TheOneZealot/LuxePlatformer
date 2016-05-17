@@ -7,6 +7,8 @@ import luxe.Color;
 import luxe.Vector;
 import luxe.Rectangle;
 import phoenix.Texture;
+import AABBPhysics;
+using RectangleExt;
 
 class Main extends luxe.Game
 {
@@ -15,6 +17,8 @@ class Main extends luxe.Game
     var player:Sprite;
     var speed:Float = 128;
     var collider:Rectangle;
+    var mpos:Vector;
+    var hit:HitStatic;
 
     override function config(config:GameConfig)
     {
@@ -28,8 +32,6 @@ class Main extends luxe.Game
 
     override function ready()
     {
-        physics = Luxe.physics.add_engine(AABBPhysics);
-
         var parcel = new Parcel({});
 
         new ParcelProgress({
@@ -43,6 +45,8 @@ class Main extends luxe.Game
 
     function assetsloaded( _ ) : Void
     {
+        physics = Luxe.physics.add_engine(AABBPhysics);
+
         player = new Sprite({
             name: "player",
             pos: new Vector(64, 64),
@@ -59,6 +63,11 @@ class Main extends luxe.Game
         Luxe.input.bind_key("left", Key.key_a);
         Luxe.input.bind_key("down", Key.key_s);
         Luxe.input.bind_key("right", Key.key_d);
+    }
+
+    override function onmousemove( e:MouseEvent )
+    {
+        mpos = e.pos;
     }
 
     override function onkeyup( e:KeyEvent )
@@ -87,6 +96,11 @@ class Main extends luxe.Game
         if( Luxe.input.inputdown("right") )
         {
             player.pos.x += speed * dt;
+        }
+
+        if (mpos != null)
+        {
+            hit = physics.intersectPoint(mpos);
         }
     }
 }
