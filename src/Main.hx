@@ -16,9 +16,9 @@ class Main extends luxe.Game
 
     var player:Sprite;
     var speed:Float = 128;
-    var collider:Rectangle;
+    var colliders:Array<Rectangle>;
     var mpos:Vector;
-    var hit:HitStatic;
+    var hits:Array<HitStatic>;
 
     override function config(config:GameConfig)
     {
@@ -54,10 +54,14 @@ class Main extends luxe.Game
             size: new Vector(128, 128)
         });
 
-        collider = new Rectangle();
-        collider.set(256, 256, 256, 256);
+        colliders = [
+            new Rectangle(256, 256, 256, 256),
+            new Rectangle(384, 128, 256, 256)
+        ];
 
-        physics.staticBodies = physics.staticBodies.concat([collider]);
+        hits = new Array<HitStatic>();
+
+        physics.staticBodies = physics.staticBodies.concat(colliders);
 
         Luxe.input.bind_key("up", Key.key_w);
         Luxe.input.bind_key("left", Key.key_a);
@@ -100,7 +104,11 @@ class Main extends luxe.Game
 
         if (mpos != null)
         {
-            hit = physics.intersectPoint(mpos);
+            hits = physics.intersectPoint(mpos);
+            for( hit in hits )
+            {
+
+            }
         }
     }
 }

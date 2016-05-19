@@ -33,19 +33,22 @@ class AABBPhysics extends PhysicsEngine
                 rect: rect,
                 color: new Color(1, 1, 1, 1)
             });
+        }
 
-            for( point in pointTests )
+        for( point in pointTests )
+        {
+            var pointColor = new Color(0, 1, 0, 1);
+            for( rect in staticBodies )
             {
                 var hit = rect.intersectPoint(point);
-                var pointColor = new Color(0, 1, 0, 1);
                 if (hit.hit)
                 {
                     Luxe.draw.box({
                         immediate: true,
                         rect: new Rectangle(hit.pos.x - 1, hit.pos.y - 1, 2, 2),
-                        color: new Color(1, 0, 0, 1)
+                        color: new Color(1, 1, 0, 1)
                     });
-                    pointColor = new Color(1, 1, 0, 1);
+                    pointColor = new Color(1, 0, 0, 1);
                 }
                 Luxe.draw.box({
                     immediate: true,
@@ -53,22 +56,18 @@ class AABBPhysics extends PhysicsEngine
                     color: pointColor
                 });
             }
-            pointTests = new Array<Vector>();
         }
-
+        pointTests = new Array<Vector>();
     }
 
-    public function intersectPoint(point:Vector) : HitStatic
+    public function intersectPoint(point:Vector) : Array<HitStatic>
     {
-        pointTests = pointTests.concat([point]);
-        var hit:HitStatic = {hit:false, collider: new Rectangle(), pos: new Vector(), normal: new Vector(), delta: new Vector()};
+        var hits:Array<HitStatic> = new Array<HitStatic>();
+        pointTests.push(point);
         for( rect in staticBodies )
         {
-            if( hit.hit )
-            {
-                return hit;
-            }
+            hits.push(rect.intersectPoint(point));
         }
-        return hit;
+        return hits;
     }
 }

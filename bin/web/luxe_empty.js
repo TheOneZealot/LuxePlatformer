@@ -69,33 +69,39 @@ AABBPhysics.prototype = $extend(luxe_PhysicsEngine.prototype,{
 			var rect = _g1[_g];
 			++_g;
 			Luxe.draw.rectangle({ immediate : true, rect : rect, color : new phoenix_Color(1,1,1,1)});
-			var _g2 = 0;
-			var _g3 = this.pointTests;
-			while(_g2 < _g3.length) {
-				var point = _g3[_g2];
-				++_g2;
-				var hit = RectangleExt.intersectPoint(rect,point);
-				var pointColor = new phoenix_Color(0,1,0,1);
+		}
+		var _g2 = 0;
+		var _g11 = this.pointTests;
+		while(_g2 < _g11.length) {
+			var point = _g11[_g2];
+			++_g2;
+			var pointColor = new phoenix_Color(0,1,0,1);
+			var _g21 = 0;
+			var _g3 = this.staticBodies;
+			while(_g21 < _g3.length) {
+				var rect1 = _g3[_g21];
+				++_g21;
+				var hit = RectangleExt.intersectPoint(rect1,point);
 				if(hit.hit) {
-					Luxe.draw.box({ immediate : true, rect : new phoenix_Rectangle(hit.pos.x - 1,hit.pos.y - 1,2,2), color : new phoenix_Color(1,0,0,1)});
-					pointColor = new phoenix_Color(1,1,0,1);
+					Luxe.draw.box({ immediate : true, rect : new phoenix_Rectangle(hit.pos.x - 1,hit.pos.y - 1,2,2), color : new phoenix_Color(1,1,0,1)});
+					pointColor = new phoenix_Color(1,0,0,1);
 				}
 				Luxe.draw.box({ immediate : true, rect : new phoenix_Rectangle(point.x - 1,point.y - 1,2,2), color : pointColor});
 			}
-			this.pointTests = [];
 		}
+		this.pointTests = [];
 	}
 	,intersectPoint: function(point) {
-		this.pointTests = this.pointTests.concat([point]);
-		var hit = { hit : false, collider : new phoenix_Rectangle(), pos : new phoenix_Vector(), normal : new phoenix_Vector(), delta : new phoenix_Vector()};
+		var hits = [];
+		this.pointTests.push(point);
 		var _g = 0;
 		var _g1 = this.staticBodies;
 		while(_g < _g1.length) {
 			var rect = _g1[_g];
 			++_g;
-			if(hit.hit) return hit;
+			hits.push(RectangleExt.intersectPoint(rect,point));
 		}
-		return hit;
+		return hits;
 	}
 	,__class__: AABBPhysics
 });
@@ -452,9 +458,9 @@ Main.prototype = $extend(luxe_Game.prototype,{
 	,assetsloaded: function(_) {
 		Main.physics = Luxe.physics.add_engine(AABBPhysics);
 		this.player = new luxe_Sprite({ name : "player", pos : new phoenix_Vector(64,64), color : new phoenix_Color().rgb(16337668), size : new phoenix_Vector(128,128)});
-		this.collider = new phoenix_Rectangle();
-		this.collider.set(256,256,256,256);
-		Main.physics.staticBodies = Main.physics.staticBodies.concat([this.collider]);
+		this.colliders = [new phoenix_Rectangle(256,256,256,256),new phoenix_Rectangle(384,128,256,256)];
+		this.hits = [];
+		Main.physics.staticBodies = Main.physics.staticBodies.concat(this.colliders);
 		Luxe.input.bind_key("up",119);
 		Luxe.input.bind_key("left",97);
 		Luxe.input.bind_key("down",115);
@@ -484,7 +490,15 @@ Main.prototype = $extend(luxe_Game.prototype,{
 			var _g3 = this.player.get_pos();
 			_g3.set_x(_g3.x + this.speed * dt);
 		}
-		if(this.mpos != null) this.hit = Main.physics.intersectPoint(this.mpos);
+		if(this.mpos != null) {
+			this.hits = Main.physics.intersectPoint(this.mpos);
+			var _g4 = 0;
+			var _g11 = this.hits;
+			while(_g4 < _g11.length) {
+				var hit = _g11[_g4];
+				++_g4;
+			}
+		}
 	}
 	,__class__: Main
 });
