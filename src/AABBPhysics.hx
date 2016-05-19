@@ -16,11 +16,13 @@ class AABBPhysics extends PhysicsEngine
 {
     public var staticBodies : Array<Rectangle>;
     var pointTests : Array<Vector>;
+    var segmentTests : Array<{origin:Vector, delta:Vector}>;
 
     override public function init()
     {
         staticBodies = new Array<Rectangle>();
         pointTests = new Array<Vector>();
+        segmentTests = new Array<{origin:Vector, delta:Vector}>();
     }
 
     override public function render()
@@ -58,6 +60,32 @@ class AABBPhysics extends PhysicsEngine
             }
         }
         pointTests = new Array<Vector>();
+
+        for( segment in segmentTests )
+        {
+            var segmentColor = new Color(0, 1, 0, 1);
+            for( rect in staticBodies )
+            {
+                var hit = rect.intersectSegment(segment.origin, segment.delta);
+                if( hit.hit )
+                {
+                    Luxe.draw.line({
+                        immediate: true,
+                        p0: segment.origin,
+                        p1: new Vector(),
+                        color: new Color(1, 1, 0, 1)
+                    });
+                    segmentColor = new Color(1, 0, 0, 1);
+                }
+                Luxe.draw.line({
+                    immediate: true,
+                    p0: segment.origin,
+                    p1: segment.delta,
+                    color: segmentColor
+                });
+            }
+        }
+        segmentTests = new Array<{origin:Vector, delta:Vector}>();
     }
 
     public function intersectPoint(point:Vector) : Array<HitStatic>
@@ -67,6 +95,17 @@ class AABBPhysics extends PhysicsEngine
         for( rect in staticBodies )
         {
             hits.push(rect.intersectPoint(point));
+        }
+        return hits;
+    }
+
+    public function intersectSegment(origin:Vector, delta:Vector) : Array<HitStatic>
+    {
+        var hits:Array<HitStatic> = new Array<HitStatic>();
+        segmentTests.push({origin:origin, delta:delta});
+        for( rect in staticBodies )
+        {
+            hits.push(rect.intersectSegment(origin, delta));
         }
         return hits;
     }

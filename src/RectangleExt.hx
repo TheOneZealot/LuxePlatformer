@@ -47,4 +47,27 @@ class RectangleExt
         }
         return hitResult;
     }
+
+    public static function intersectSegment(rect:Rectangle, origin:Vector, delta:Vector) : HitStatic
+    {
+        var hitResult:HitStatic = {hit:false, collider: rect, pos: new Vector(), normal: new Vector(), delta: new Vector()};
+
+        var scaleX:Float = 1.0 / delta.x;
+        var scaleY:Float = 1.0 / delta.y;
+        var signX:Float = if (scaleX < 0) -1 else 1;
+        var signY:Float = if (scaleY < 0) -1 else 1;
+        var nearTimeX:Float = (rect.mid().x - signX * rect.half().x - origin.x) * scaleX;
+        var nearTimeY:Float = (rect.mid().y - signY * rect.half().y - origin.y) * scaleY;
+        var farTimeX:Float = (rect.mid().x + signX * rect.half().x - origin.x) * scaleX;
+        var farTimeY:Float = (rect.mid().y + signY * rect.half().y - origin.y) * scaleY;
+
+        if (nearTimeX > farTimeY || nearTimeY > farTimeX) return hitResult;
+
+        var nearTime:Float = if (nearTimeX > nearTimeY) nearTimeX else nearTimeY;
+        var farTime:Float = if (farTimeX > farTimeY) farTimeX else farTimeY;
+
+        if (nearTime >= 1 || farTime <= 0) return hitResult;
+
+        return hitResult;
+    }
 }

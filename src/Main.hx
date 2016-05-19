@@ -18,6 +18,8 @@ class Main extends luxe.Game
     var speed:Float = 128;
     var colliders:Array<Rectangle>;
     var mpos:Vector;
+    var mdown:Bool;
+    var mdownpos:Vector;
     var hits:Array<HitStatic>;
 
     override function config(config:GameConfig)
@@ -72,6 +74,20 @@ class Main extends luxe.Game
     override function onmousemove( e:MouseEvent )
     {
         mpos = e.pos;
+        if (mdown == false)
+        {
+            mdownpos = mpos;
+        }
+    }
+
+    override function onmousedown( e:MouseEvent )
+    {
+        mdown = true;
+    }
+
+    override function onmouseup( e:MouseEvent )
+    {
+        mdown = false;
     }
 
     override function onkeyup( e:KeyEvent )
@@ -102,12 +118,18 @@ class Main extends luxe.Game
             player.pos.x += speed * dt;
         }
 
-        if (mpos != null)
+        if (mpos != null && mdownpos != null)
         {
-            hits = physics.intersectPoint(mpos);
-            for( hit in hits )
+            if( mdown )
             {
-
+                Luxe.draw.text({
+                    immediate: true,
+                    color: new Color(1, 1, 1, 1),
+                    pos: new Vector(16, 16),
+                    point_size: 24,
+                    text: "x: " + mdownpos.x + " y: " + mdownpos.y
+                });
+                hits = physics.intersectSegment(mdownpos, new Vector(mdownpos.x - mpos.x, mdownpos.y - mpos.y));
             }
         }
     }

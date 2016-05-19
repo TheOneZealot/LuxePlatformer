@@ -60,6 +60,7 @@ AABBPhysics.prototype = $extend(luxe_PhysicsEngine.prototype,{
 	init: function() {
 		this.staticBodies = [];
 		this.pointTests = [];
+		this.segmentTests = [];
 	}
 	,render: function() {
 		if(!this.get_draw()) return;
@@ -90,6 +91,26 @@ AABBPhysics.prototype = $extend(luxe_PhysicsEngine.prototype,{
 			}
 		}
 		this.pointTests = [];
+		var _g4 = 0;
+		var _g12 = this.segmentTests;
+		while(_g4 < _g12.length) {
+			var segment = _g12[_g4];
+			++_g4;
+			var segmentColor = new phoenix_Color(0,1,0,1);
+			var _g22 = 0;
+			var _g31 = this.staticBodies;
+			while(_g22 < _g31.length) {
+				var rect2 = _g31[_g22];
+				++_g22;
+				var hit1 = RectangleExt.intersectSegment(rect2,segment.origin,segment.delta);
+				if(hit1.hit) {
+					Luxe.draw.line({ immediate : true, p0 : segment.origin, p1 : new phoenix_Vector(), color : new phoenix_Color(1,1,0,1)});
+					segmentColor = new phoenix_Color(1,0,0,1);
+				}
+				Luxe.draw.line({ immediate : true, p0 : segment.origin, p1 : segment.delta, color : segmentColor});
+			}
+		}
+		this.segmentTests = [];
 	}
 	,intersectPoint: function(point) {
 		var hits = [];
@@ -100,6 +121,18 @@ AABBPhysics.prototype = $extend(luxe_PhysicsEngine.prototype,{
 			var rect = _g1[_g];
 			++_g;
 			hits.push(RectangleExt.intersectPoint(rect,point));
+		}
+		return hits;
+	}
+	,intersectSegment: function(origin,delta) {
+		var hits = [];
+		this.segmentTests.push({ origin : origin, delta : delta});
+		var _g = 0;
+		var _g1 = this.staticBodies;
+		while(_g < _g1.length) {
+			var rect = _g1[_g];
+			++_g;
+			hits.push(RectangleExt.intersectSegment(rect,origin,delta));
 		}
 		return hits;
 	}
@@ -468,6 +501,13 @@ Main.prototype = $extend(luxe_Game.prototype,{
 	}
 	,onmousemove: function(e) {
 		this.mpos = e.pos;
+		if(this.mdown == false) this.mdownpos = this.mpos;
+	}
+	,onmousedown: function(e) {
+		this.mdown = true;
+	}
+	,onmouseup: function(e) {
+		this.mdown = false;
 	}
 	,onkeyup: function(e) {
 		if(e.keycode == 27) Luxe.core.shutdown();
@@ -490,13 +530,10 @@ Main.prototype = $extend(luxe_Game.prototype,{
 			var _g3 = this.player.get_pos();
 			_g3.set_x(_g3.x + this.speed * dt);
 		}
-		if(this.mpos != null) {
-			this.hits = Main.physics.intersectPoint(this.mpos);
-			var _g4 = 0;
-			var _g11 = this.hits;
-			while(_g4 < _g11.length) {
-				var hit = _g11[_g4];
-				++_g4;
+		if(this.mpos != null && this.mdownpos != null) {
+			if(this.mdown) {
+				Luxe.draw.text({ immediate : true, color : new phoenix_Color(1,1,1,1), pos : new phoenix_Vector(16,16), point_size : 24, text : "x: " + this.mdownpos.x + " y: " + this.mdownpos.y});
+				this.hits = Main.physics.intersectSegment(this.mdownpos,new phoenix_Vector(this.mdownpos.x - this.mpos.x,this.mdownpos.y - this.mpos.y));
 			}
 		}
 	}
@@ -537,6 +574,26 @@ RectangleExt.intersectPoint = function(rect,point) {
 		hitResult.pos.set_y(RectangleExt.mid(rect).y + RectangleExt.half(rect).y * sy);
 		hitResult.pos.set_x(point.x);
 	}
+	return hitResult;
+};
+RectangleExt.intersectSegment = function(rect,origin,delta) {
+	var hitResult = { hit : false, collider : rect, pos : new phoenix_Vector(), normal : new phoenix_Vector(), delta : new phoenix_Vector()};
+	var scaleX = 1.0 / delta.x;
+	var scaleY = 1.0 / delta.y;
+	var signX;
+	if(scaleX < 0) signX = -1; else signX = 1;
+	var signY;
+	if(scaleY < 0) signY = -1; else signY = 1;
+	var nearTimeX = (RectangleExt.mid(rect).x - signX * RectangleExt.half(rect).x - origin.x) * scaleX;
+	var nearTimeY = (RectangleExt.mid(rect).y - signY * RectangleExt.half(rect).y - origin.y) * scaleY;
+	var farTimeX = (RectangleExt.mid(rect).x + signX * RectangleExt.half(rect).x - origin.x) * scaleX;
+	var farTimeY = (RectangleExt.mid(rect).y + signY * RectangleExt.half(rect).y - origin.y) * scaleY;
+	if(nearTimeX > farTimeY || nearTimeY > farTimeX) return hitResult;
+	var nearTime;
+	if(nearTimeX > nearTimeY) nearTime = nearTimeX; else nearTime = nearTimeY;
+	var farTime;
+	if(farTimeX > farTimeY) farTime = farTimeX; else farTime = farTimeY;
+	if(nearTime >= 1 || farTime <= 0) return hitResult;
 	return hitResult;
 };
 var Reflect = function() { };
@@ -20108,7 +20165,7 @@ snow_core_web_Runtime.prototype = {
 			if(_gl == null) _gl = this.window.getContext("experimental-webgl" + config.webgl.version);
 		} else _gl = js_html__$CanvasElement_CanvasUtil.getContextWebGL(this.window,attr);
 		snow_modules_opengl_web_GL.gl = _gl;
-		haxe_Log.trace("  i / runtime / " + ("web / GL / context(" + Std.string(_gl) + ")"),{ fileName : "Runtime.hx", lineNumber : 627, className : "snow.core.web.Runtime", methodName : "create_render_context"});
+		haxe_Log.trace("  i / runtime / " + ("web / GL / context(" + Std.string(_gl != null) + ")"),{ fileName : "Runtime.hx", lineNumber : 627, className : "snow.core.web.Runtime", methodName : "create_render_context"});
 		return _gl != null;
 	}
 	,apply_GL_attr: function(render,attr) {
@@ -21948,13 +22005,11 @@ snow_systems_audio_Audio.prototype = {
 	}
 	,suspend: function() {
 		if(!this.active) return;
-		haxe_Log.trace("    i / audio / " + "suspending sound context",{ fileName : "Audio.hx", lineNumber : 152, className : "snow.systems.audio.Audio", methodName : "suspend"});
 		this.active = false;
 		this.module.suspend();
 	}
 	,resume: function() {
 		if(this.active || !this.module.active) return;
-		haxe_Log.trace("    i / audio / " + "resuming sound context",{ fileName : "Audio.hx", lineNumber : 164, className : "snow.systems.audio.Audio", methodName : "resume"});
 		this.active = true;
 		this.module.resume();
 	}
