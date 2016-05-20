@@ -9,7 +9,8 @@ typedef HitStatic = {
     collider: Rectangle,
     pos: Vector,
     delta: Vector,
-    normal: Vector
+    normal: Vector,
+    time: Float
 };
 
 class AABBPhysics extends PhysicsEngine
@@ -63,25 +64,29 @@ class AABBPhysics extends PhysicsEngine
 
         for( segment in segmentTests )
         {
-            var segmentColor = new Color(0, 1, 0, 1);
-            for( rect in staticBodies )
+            var hit = intersectSegment(segment.origin, segment.delta);
+            if( hit.hit )
             {
-                var hit = rect.intersectSegment(segment.origin, segment.delta);
-                if( hit.hit )
-                {
-                    Luxe.draw.line({
-                        immediate: true,
-                        p0: segment.origin,
-                        p1: new Vector(),
-                        color: new Color(1, 1, 0, 1)
-                    });
-                    segmentColor = new Color(1, 0, 0, 1);
-                }
+                Luxe.draw.line({
+                    immediate: true,
+                    p0: hit.pos,
+                    p1: new Vector(segment.origin.x + segment.delta.x, segment.origin.y + segment.delta.y),
+                    color: new Color(1, 1, 0, 1)
+                });
                 Luxe.draw.line({
                     immediate: true,
                     p0: segment.origin,
-                    p1: segment.delta,
-                    color: segmentColor
+                    p1: hit.pos,
+                    color: new Color(1, 0, 0, 1)
+                });
+            }
+            if( !hit.hit )
+            {
+                Luxe.draw.line({
+                    immediate: true,
+                    p0: segment.origin,
+                    p1: new Vector(segment.origin.x + segment.delta.x, segment.origin.y + segment.delta.y),
+                    color: new Color(0, 1, 0, 1)
                 });
             }
         }
@@ -99,7 +104,7 @@ class AABBPhysics extends PhysicsEngine
         return hits;
     }
 
-    public function intersectSegment(origin:Vector, delta:Vector) : Array<HitStatic>
+    public function intersectSegment(origin:Vector, delta:Vector) : HitStatic
     {
         var hits:Array<HitStatic> = new Array<HitStatic>();
         segmentTests.push({origin:origin, delta:delta});
@@ -107,6 +112,21 @@ class AABBPhysics extends PhysicsEngine
         {
             hits.push(rect.intersectSegment(origin, delta));
         }
-        return hits;
+        if (hits.length > 1)
+        {
+            var bestHit:HitStatic = hits[0];
+            for( hit in hits )
+            {
+                if (hit.time < bestHit.time)
+                {
+                    bestHit = hit;
+                }
+            }
+            return bestHit;
+        }
+        else
+        {
+            return hits[0];
+        }
     }
 }

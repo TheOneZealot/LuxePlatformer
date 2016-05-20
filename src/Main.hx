@@ -20,7 +20,7 @@ class Main extends luxe.Game
     var mpos:Vector;
     var mdown:Bool;
     var mdownpos:Vector;
-    var hits:Array<HitStatic>;
+    var hit:HitStatic;
 
     override function config(config:GameConfig)
     {
@@ -60,8 +60,6 @@ class Main extends luxe.Game
             new Rectangle(256, 256, 256, 256),
             new Rectangle(384, 128, 256, 256)
         ];
-
-        hits = new Array<HitStatic>();
 
         physics.staticBodies = physics.staticBodies.concat(colliders);
 
@@ -129,7 +127,7 @@ class Main extends luxe.Game
                     point_size: 24,
                     text: "x: " + mdownpos.x + " y: " + mdownpos.y
                 });
-                hits = physics.intersectSegment(mdownpos, new Vector(mdownpos.x - mpos.x, mdownpos.y - mpos.y));
+                hit = physics.intersectSegment(new Vector(), mpos);
             }
         }
     }
