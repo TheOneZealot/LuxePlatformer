@@ -6,21 +6,23 @@ import luxe.ParcelProgress;
 import luxe.Color;
 import luxe.Vector;
 import luxe.Rectangle;
+import luxe.collision.shapes.Shape;
+import luxe.collision.shapes.Polygon;
+import luxe.collision.shapes.Ray;
+import luxe.physics.nape.PhysicsNape;
 import phoenix.Texture;
-import AABBPhysics;
-using RectangleExt;
+import nape.;
 
 class Main extends luxe.Game
 {
-    static var physics:AABBPhysics;
+    static var physics:PlatformerPhysics;
 
     var player:Sprite;
     var speed:Float = 128;
-    var colliders:Array<Rectangle>;
+    var colliders:Array<Shape>;
     var mpos:Vector;
     var mdown:Bool;
     var mdownpos:Vector;
-    var hit:HitStatic;
 
     override function config(config:GameConfig)
     {
@@ -47,7 +49,7 @@ class Main extends luxe.Game
 
     function assetsloaded( _ ) : Void
     {
-        physics = Luxe.physics.add_engine(AABBPhysics);
+        physics = Luxe.physics.add_engine(PlatformerPhysics);
 
         player = new Sprite({
             name: "player",
@@ -57,8 +59,8 @@ class Main extends luxe.Game
         });
 
         colliders = [
-            new Rectangle(256, 256, 256, 256),
-            new Rectangle(384, 128, 256, 256)
+            Polygon.rectangle(384, 384, 256, 256),
+            Polygon.rectangle(512, 256, 256, 256)
         ];
 
         physics.staticBodies = physics.staticBodies.concat(colliders);
@@ -120,14 +122,7 @@ class Main extends luxe.Game
         {
             if( mdown )
             {
-                Luxe.draw.text({
-                    immediate: true,
-                    color: new Color(1, 1, 1, 1),
-                    pos: new Vector(16, 16),
-                    point_size: 24,
-                    text: "x: " + mdownpos.x + " y: " + mdownpos.y
-                });
-                hit = physics.intersectSegment(new Vector(), mpos);
+                physics.raycast(new Ray(new Vector(), mpos, false));
             }
         }
     }

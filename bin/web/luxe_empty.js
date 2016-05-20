@@ -6,140 +6,6 @@ function $extend(from, fields) {
 	if( fields.toString !== Object.prototype.toString ) proto.toString = fields.toString;
 	return proto;
 }
-var luxe_PhysicsEngine = function() {
-	this.draw = true;
-	this.paused = false;
-	this.name = "engine";
-	this.set_gravity(new phoenix_Vector(0,-9.8,0));
-	Luxe.on(10,$bind(this,this._render));
-};
-$hxClasses["luxe.PhysicsEngine"] = luxe_PhysicsEngine;
-luxe_PhysicsEngine.__name__ = ["luxe","PhysicsEngine"];
-luxe_PhysicsEngine.prototype = {
-	init: function() {
-	}
-	,_render: function(_) {
-		this.render();
-	}
-	,process: function() {
-	}
-	,update: function() {
-	}
-	,render: function() {
-	}
-	,destroy: function() {
-	}
-	,get_paused: function() {
-		return this.paused;
-	}
-	,set_paused: function(_pause) {
-		return this.paused = _pause;
-	}
-	,get_draw: function() {
-		return this.draw;
-	}
-	,set_draw: function(_draw) {
-		return this.draw = _draw;
-	}
-	,get_gravity: function() {
-		return this.gravity;
-	}
-	,set_gravity: function(_gravity) {
-		return this.gravity = _gravity;
-	}
-	,__class__: luxe_PhysicsEngine
-	,__properties__: {set_draw:"set_draw",get_draw:"get_draw",set_gravity:"set_gravity",get_gravity:"get_gravity",set_paused:"set_paused",get_paused:"get_paused"}
-};
-var AABBPhysics = function() {
-	luxe_PhysicsEngine.call(this);
-};
-$hxClasses["AABBPhysics"] = AABBPhysics;
-AABBPhysics.__name__ = ["AABBPhysics"];
-AABBPhysics.__super__ = luxe_PhysicsEngine;
-AABBPhysics.prototype = $extend(luxe_PhysicsEngine.prototype,{
-	init: function() {
-		this.staticBodies = [];
-		this.pointTests = [];
-		this.segmentTests = [];
-	}
-	,render: function() {
-		if(!this.get_draw()) return;
-		var _g = 0;
-		var _g1 = this.staticBodies;
-		while(_g < _g1.length) {
-			var rect = _g1[_g];
-			++_g;
-			Luxe.draw.rectangle({ immediate : true, rect : rect, color : new phoenix_Color(1,1,1,1)});
-		}
-		var _g2 = 0;
-		var _g11 = this.pointTests;
-		while(_g2 < _g11.length) {
-			var point = _g11[_g2];
-			++_g2;
-			var pointColor = new phoenix_Color(0,1,0,1);
-			var _g21 = 0;
-			var _g3 = this.staticBodies;
-			while(_g21 < _g3.length) {
-				var rect1 = _g3[_g21];
-				++_g21;
-				var hit = RectangleExt.intersectPoint(rect1,point);
-				if(hit.hit) {
-					Luxe.draw.box({ immediate : true, rect : new phoenix_Rectangle(hit.pos.x - 1,hit.pos.y - 1,2,2), color : new phoenix_Color(1,1,0,1)});
-					pointColor = new phoenix_Color(1,0,0,1);
-				}
-				Luxe.draw.box({ immediate : true, rect : new phoenix_Rectangle(point.x - 1,point.y - 1,2,2), color : pointColor});
-			}
-		}
-		this.pointTests = [];
-		var _g4 = 0;
-		var _g12 = this.segmentTests;
-		while(_g4 < _g12.length) {
-			var segment = _g12[_g4];
-			++_g4;
-			var hit1 = this.intersectSegment(segment.origin,segment.delta);
-			if(hit1.hit) {
-				Luxe.draw.line({ immediate : true, p0 : hit1.pos, p1 : new phoenix_Vector(segment.origin.x + segment.delta.x,segment.origin.y + segment.delta.y), color : new phoenix_Color(1,1,0,1)});
-				Luxe.draw.line({ immediate : true, p0 : segment.origin, p1 : hit1.pos, color : new phoenix_Color(1,0,0,1)});
-			}
-			if(!hit1.hit) Luxe.draw.line({ immediate : true, p0 : segment.origin, p1 : new phoenix_Vector(segment.origin.x + segment.delta.x,segment.origin.y + segment.delta.y), color : new phoenix_Color(0,1,0,1)});
-		}
-		this.segmentTests = [];
-	}
-	,intersectPoint: function(point) {
-		var hits = [];
-		this.pointTests.push(point);
-		var _g = 0;
-		var _g1 = this.staticBodies;
-		while(_g < _g1.length) {
-			var rect = _g1[_g];
-			++_g;
-			hits.push(RectangleExt.intersectPoint(rect,point));
-		}
-		return hits;
-	}
-	,intersectSegment: function(origin,delta) {
-		var hits = [];
-		this.segmentTests.push({ origin : origin, delta : delta});
-		var _g = 0;
-		var _g1 = this.staticBodies;
-		while(_g < _g1.length) {
-			var rect = _g1[_g];
-			++_g;
-			hits.push(RectangleExt.intersectSegment(rect,origin,delta));
-		}
-		if(hits.length > 1) {
-			var bestHit = hits[0];
-			var _g2 = 0;
-			while(_g2 < hits.length) {
-				var hit = hits[_g2];
-				++_g2;
-				if(hit.time < bestHit.time) bestHit = hit;
-			}
-			return bestHit;
-		} else return hits[0];
-	}
-	,__class__: AABBPhysics
-});
 var EReg = function(r,opt) {
 	opt = opt.split("u").join("");
 	this.r = new RegExp(r,opt);
@@ -491,9 +357,9 @@ Main.prototype = $extend(luxe_Game.prototype,{
 		parcel.load();
 	}
 	,assetsloaded: function(_) {
-		Main.physics = Luxe.physics.add_engine(AABBPhysics);
+		Main.physics = Luxe.physics.add_engine(PlatformerPhysics);
 		this.player = new luxe_Sprite({ name : "player", pos : new phoenix_Vector(64,64), color : new phoenix_Color().rgb(16337668), size : new phoenix_Vector(128,128)});
-		this.colliders = [new phoenix_Rectangle(256,256,256,256),new phoenix_Rectangle(384,128,256,256)];
+		this.colliders = [luxe_collision_shapes_Polygon.rectangle(384,384,256,256),luxe_collision_shapes_Polygon.rectangle(512,256,256,256)];
 		Main.physics.staticBodies = Main.physics.staticBodies.concat(this.colliders);
 		Luxe.input.bind_key("up",119);
 		Luxe.input.bind_key("left",97);
@@ -532,78 +398,102 @@ Main.prototype = $extend(luxe_Game.prototype,{
 			_g3.set_x(_g3.x + this.speed * dt);
 		}
 		if(this.mpos != null && this.mdownpos != null) {
-			if(this.mdown) {
-				Luxe.draw.text({ immediate : true, color : new phoenix_Color(1,1,1,1), pos : new phoenix_Vector(16,16), point_size : 24, text : "x: " + this.mdownpos.x + " y: " + this.mdownpos.y});
-				this.hit = Main.physics.intersectSegment(new phoenix_Vector(),this.mpos);
-			}
+			if(this.mdown) Main.physics.raycast(new luxe_collision_shapes_Ray(new phoenix_Vector(),this.mpos,false));
 		}
 	}
 	,__class__: Main
 });
 Math.__name__ = ["Math"];
-var RectangleExt = function() { };
-$hxClasses["RectangleExt"] = RectangleExt;
-RectangleExt.__name__ = ["RectangleExt"];
-RectangleExt.mid = function(rect) {
-	return new phoenix_Vector(rect.x + rect.w / 2,rect.y + rect.h / 2);
+var luxe_PhysicsEngine = function() {
+	this.draw = true;
+	this.paused = false;
+	this.name = "engine";
+	this.set_gravity(new phoenix_Vector(0,-9.8,0));
+	Luxe.on(10,$bind(this,this._render));
 };
-RectangleExt.half = function(rect) {
-	return new phoenix_Vector(rect.w / 2,rect.h / 2,null,null);
-};
-RectangleExt.intersectPoint = function(rect,point) {
-	var hit = { hit : false, collider : rect, pos : new phoenix_Vector(), normal : new phoenix_Vector(), delta : new phoenix_Vector(), time : 0};
-	var dx = point.x - RectangleExt.mid(rect).x;
-	var px = RectangleExt.half(rect).x - Math.abs(dx);
-	if(px <= 0) return hit;
-	var dy = point.y - RectangleExt.mid(rect).y;
-	var py = RectangleExt.half(rect).y - Math.abs(dy);
-	if(py <= 0) return hit;
-	if(py > px) {
-		var sx;
-		if(dx < 0) sx = -1; else sx = 1;
-		hit.hit = true;
-		hit.delta.set_x(px * sx);
-		hit.normal.set_x(sx);
-		hit.pos.set_x(RectangleExt.mid(rect).x + RectangleExt.half(rect).x * sx);
-		hit.pos.set_y(point.y);
-	} else {
-		var sy;
-		if(dy < 0) sy = -1; else sy = 1;
-		hit.hit = true;
-		hit.delta.set_y(py * sy);
-		hit.normal.set_y(sy);
-		hit.pos.set_y(RectangleExt.mid(rect).y + RectangleExt.half(rect).y * sy);
-		hit.pos.set_x(point.x);
+$hxClasses["luxe.PhysicsEngine"] = luxe_PhysicsEngine;
+luxe_PhysicsEngine.__name__ = ["luxe","PhysicsEngine"];
+luxe_PhysicsEngine.prototype = {
+	init: function() {
 	}
-	return hit;
+	,_render: function(_) {
+		this.render();
+	}
+	,process: function() {
+	}
+	,update: function() {
+	}
+	,render: function() {
+	}
+	,destroy: function() {
+	}
+	,get_paused: function() {
+		return this.paused;
+	}
+	,set_paused: function(_pause) {
+		return this.paused = _pause;
+	}
+	,get_draw: function() {
+		return this.draw;
+	}
+	,set_draw: function(_draw) {
+		return this.draw = _draw;
+	}
+	,get_gravity: function() {
+		return this.gravity;
+	}
+	,set_gravity: function(_gravity) {
+		return this.gravity = _gravity;
+	}
+	,__class__: luxe_PhysicsEngine
+	,__properties__: {set_draw:"set_draw",get_draw:"get_draw",set_gravity:"set_gravity",get_gravity:"get_gravity",set_paused:"set_paused",get_paused:"get_paused"}
 };
-RectangleExt.intersectSegment = function(rect,origin,delta) {
-	var hit = { hit : false, collider : rect, pos : new phoenix_Vector(), normal : new phoenix_Vector(), delta : new phoenix_Vector(), time : 0};
-	var scaleX = 1.0 / delta.x;
-	var scaleY = 1.0 / delta.y;
-	var signX;
-	if(scaleX < 0) signX = -1; else signX = 1;
-	var signY;
-	if(scaleY < 0) signY = -1; else signY = 1;
-	var nearTimeX = (RectangleExt.mid(rect).x - signX * RectangleExt.half(rect).x - origin.x) * scaleX;
-	var nearTimeY = (RectangleExt.mid(rect).y - signY * RectangleExt.half(rect).y - origin.y) * scaleY;
-	var farTimeX = (RectangleExt.mid(rect).x + signX * RectangleExt.half(rect).x - origin.x) * scaleX;
-	var farTimeY = (RectangleExt.mid(rect).y + signY * RectangleExt.half(rect).y - origin.y) * scaleY;
-	if(nearTimeX > farTimeY || nearTimeY > farTimeX) return hit;
-	var nearTime;
-	if(nearTimeX > nearTimeY) nearTime = nearTimeX; else nearTime = nearTimeY;
-	var farTime;
-	if(farTimeX > farTimeY) farTime = farTimeX; else farTime = farTimeY;
-	if(nearTime >= 1 || farTime <= 0) return hit;
-	hit.time = Math.min(Math.max(0,nearTime),1);
-	if(nearTimeX > nearTimeY) hit.normal.set_x(-signX); else hit.normal.set_y(-signY);
-	hit.delta.set_x(hit.time * delta.x);
-	hit.delta.set_y(hit.time * delta.y);
-	hit.pos.set_x(origin.x + hit.delta.x);
-	hit.pos.set_y(origin.y + hit.delta.y);
-	hit.hit = true;
-	return hit;
+var PlatformerPhysics = function() {
+	luxe_PhysicsEngine.call(this);
 };
+$hxClasses["PlatformerPhysics"] = PlatformerPhysics;
+PlatformerPhysics.__name__ = ["PlatformerPhysics"];
+PlatformerPhysics.__super__ = luxe_PhysicsEngine;
+PlatformerPhysics.prototype = $extend(luxe_PhysicsEngine.prototype,{
+	init: function() {
+		this.shapeDrawer = new ShapeDrawerColor();
+		this.staticBodies = [];
+	}
+	,render: function() {
+		if(!this.get_draw()) return;
+		var _g = 0;
+		var _g1 = this.staticBodies;
+		while(_g < _g1.length) {
+			var shape = _g1[_g];
+			++_g;
+			this.shapeDrawer.color = new phoenix_Color(1,1,1,1);
+			this.shapeDrawer.drawShape(shape);
+		}
+	}
+	,raycast: function(ray) {
+		var hits = luxe_collision_Collision.rayWithShapes(ray,this.staticBodies);
+		var hit = hits[0];
+		var _g = 0;
+		while(_g < hits.length) {
+			var col = hits[_g];
+			++_g;
+			if(col.start < hit.start) hit = col;
+		}
+		if(this.get_draw()) {
+			if(hit != null) {
+				this.shapeDrawer.color = new phoenix_Color(1,0,0,1);
+				this.shapeDrawer.drawLine(ray.start,luxe_collision_data_RayCollisionHelper.hitStart(hit));
+				this.shapeDrawer.color = new phoenix_Color(0,1,0,1);
+				this.shapeDrawer.drawLine(luxe_collision_data_RayCollisionHelper.hitStart(hit),ray.end);
+			} else {
+				this.shapeDrawer.color = new phoenix_Color(1,0,0,1);
+				this.shapeDrawer.drawLine(ray.start,ray.end);
+			}
+		}
+		return hit;
+	}
+	,__class__: PlatformerPhysics
+});
 var Reflect = function() { };
 $hxClasses["Reflect"] = Reflect;
 Reflect.__name__ = ["Reflect"];
@@ -647,6 +537,107 @@ Reflect.deleteField = function(o,field) {
 	delete(o[field]);
 	return true;
 };
+var luxe_collision_ShapeDrawer = function() {
+};
+$hxClasses["luxe.collision.ShapeDrawer"] = luxe_collision_ShapeDrawer;
+luxe_collision_ShapeDrawer.__name__ = ["luxe","collision","ShapeDrawer"];
+luxe_collision_ShapeDrawer.prototype = {
+	drawLine: function(p0,p1,startPoint) {
+		if(startPoint == null) startPoint = true;
+	}
+	,drawShape: function(shape) {
+		if(js_Boot.__instanceof(shape,luxe_collision_shapes_Polygon)) {
+			this.drawPolygon(js_Boot.__cast(shape , luxe_collision_shapes_Polygon));
+			return;
+		} else {
+			this.drawCircle(js_Boot.__cast(shape , luxe_collision_shapes_Circle));
+			return;
+		}
+	}
+	,drawPolygon: function(poly) {
+		var v;
+		var _this = poly.get_transformedVertices();
+		v = _this.slice();
+		this.drawVertList(v);
+	}
+	,drawVector: function(v,start,startPoint) {
+		if(startPoint == null) startPoint = true;
+		this.drawLine(start,v);
+	}
+	,drawCircle: function(circle) {
+		var _smooth = 10;
+		var _steps = Std["int"](_smooth * Math.sqrt(circle.get_transformedRadius()));
+		var theta = 6.2831852 / _steps;
+		var tangential_factor = Math.tan(theta);
+		var radial_factor = Math.cos(theta);
+		var x = circle.get_transformedRadius();
+		var y = 0;
+		var _verts = [];
+		var _g = 0;
+		while(_g < _steps) {
+			var i = _g++;
+			var __x = x + circle._position.x;
+			var __y = y + circle._position.y;
+			_verts.push(new phoenix_Vector(__x,__y));
+			var tx = -y;
+			var ty = x;
+			x += tx * tangential_factor;
+			y += ty * tangential_factor;
+			x *= radial_factor;
+			y *= radial_factor;
+		}
+		this.drawVertList(_verts);
+	}
+	,drawPoint: function(point,size) {
+		if(size == null) size = 4;
+		var xs = point.x - size;
+		var xe = point.x + size;
+		var ys = point.y;
+		var ye = point.y;
+		this.drawLine(new phoenix_Vector(xs,ys),new phoenix_Vector(xe,ye));
+		xs = xe = point.x;
+		ys = point.y - size;
+		ye = point.y + size;
+		this.drawLine(new phoenix_Vector(xs,ys),new phoenix_Vector(xe,ye));
+	}
+	,drawShapeCollision: function(data,length) {
+		if(length == null) length = 30;
+		var shape1_o = new phoenix_Vector(data.shape1._position.x,data.shape1._position.y);
+		var shape2_o = new phoenix_Vector(data.shape2._position.x,data.shape2._position.y);
+		this.drawPoint(shape1_o);
+		this.drawPoint(shape2_o);
+		var unit_line_end = new phoenix_Vector(shape1_o.x + data.unitVector.x * length,shape1_o.y + data.unitVector.y * length);
+		this.drawLine(shape1_o,unit_line_end);
+		var shape1p = new phoenix_Vector(shape1_o.x,shape1_o.y,shape1_o.z,shape1_o.w).add(data.separation);
+		this.drawPoint(shape1p);
+	}
+	,drawVertList: function(_verts) {
+		var _count = _verts.length;
+		if(_count < 3) throw new js__$Boot_HaxeError("cannot draw polygon with < 3 verts as this is a line or a point.");
+		this.drawLine(_verts[0],_verts[1],true);
+		var _g1 = 1;
+		var _g = _count - 1;
+		while(_g1 < _g) {
+			var i = _g1++;
+			this.drawLine(_verts[i],_verts[i + 1],false);
+		}
+		this.drawLine(_verts[_count - 1],_verts[0],false);
+	}
+	,__class__: luxe_collision_ShapeDrawer
+};
+var ShapeDrawerColor = function() {
+	this.color = new phoenix_Color(1,1,1,1);
+	luxe_collision_ShapeDrawer.call(this);
+};
+$hxClasses["ShapeDrawerColor"] = ShapeDrawerColor;
+ShapeDrawerColor.__name__ = ["ShapeDrawerColor"];
+ShapeDrawerColor.__super__ = luxe_collision_ShapeDrawer;
+ShapeDrawerColor.prototype = $extend(luxe_collision_ShapeDrawer.prototype,{
+	drawLine: function(p0,p1,startPoint) {
+		Luxe.draw.line({ immediate : true, p0 : p0, p1 : p1, color : this.color});
+	}
+	,__class__: ShapeDrawerColor
+});
 var Std = function() { };
 $hxClasses["Std"] = Std;
 Std.__name__ = ["Std"];
@@ -7688,184 +7679,65 @@ luxe_Timer.prototype = {
 	}
 	,__class__: luxe_Timer
 };
-var luxe_components_Components = function(_entity) {
-	var _map = new haxe_ds_StringMap();
-	this.components = new luxe_structural_OrderedMap_$String_$luxe_$Component(_map);
-	this.entity = _entity;
+var luxe_collision_Collision = function() { };
+$hxClasses["luxe.collision.Collision"] = luxe_collision_Collision;
+luxe_collision_Collision.__name__ = ["luxe","collision","Collision"];
+luxe_collision_Collision.shapeWithShape = function(shape1,shape2) {
+	return shape1.test(shape2);
 };
-$hxClasses["luxe.components.Components"] = luxe_components_Components;
-luxe_components_Components.__name__ = ["luxe","components","Components"];
-luxe_components_Components.prototype = {
-	destroy: function() {
-		this.components.map = null;
-		this.components = null;
-		this.entity = null;
+luxe_collision_Collision.shapeWithShapes = function(shape1,shapes) {
+	var results = [];
+	var _g = 0;
+	while(_g < shapes.length) {
+		var other_shape = shapes[_g];
+		++_g;
+		var result = luxe_collision_Collision.shapeWithShape(shape1,other_shape);
+		if(result != null) results.push(result);
 	}
-	,add: function(_component) {
-		if(_component == null) {
-			haxe_Log.trace("attempt to add null component to " + this.entity.get_name(),{ fileName : "Components.hx", lineNumber : 36, className : "luxe.components.Components", methodName : "add"});
-			return _component;
-		}
-		_component.set_entity(this.entity);
-		this.components.set(_component.name,_component);
-		_component.onadded();
-		if(this.entity.inited) _component.init();
-		if(this.entity.started) _component.onreset();
-		return _component;
-	}
-	,remove: function(_name) {
-		if(!this.components.map.exists(_name)) {
-			haxe_Log.trace("attempt to remove " + _name + " from " + this.entity.get_name() + " failed because that component was not attached to this entity",{ fileName : "Components.hx", lineNumber : 69, className : "luxe.components.Components", methodName : "remove"});
-			return false;
-		}
-		var _component = this.components.map.get(_name);
-		_component.onremoved();
-		_component.set_entity(null);
-		return this.components.remove(_name);
-	}
-	,get: function(_name,in_children) {
-		if(in_children == null) in_children = false;
-		if(!in_children) return this.components.map.get(_name); else {
-			var in_this_entity = this.components.map.get(_name);
-			if(in_this_entity != null) return in_this_entity;
-			var _g = 0;
-			var _g1 = this.entity.children;
-			while(_g < _g1.length) {
-				var _child = _g1[_g];
-				++_g;
-				var found = _child._components.get(_name,true);
-				if(found != null) return found;
-			}
-			return null;
-		}
-		return null;
-	}
-	,get_any: function(_name,in_children,first_only) {
-		if(first_only == null) first_only = true;
-		if(in_children == null) in_children = false;
-		var results = [];
-		if(!in_children) return [this.components.map.get(_name)]; else {
-			var in_this_entity = this.components.map.get(_name);
-			if(in_this_entity != null) {
-				if(first_only) return [in_this_entity]; else results.push(in_this_entity);
-			}
-			var _g = 0;
-			var _g1 = this.entity.children;
-			while(_g < _g1.length) {
-				var _child = _g1[_g];
-				++_g;
-				var found = _child._components.get_any(_name,true,first_only);
-				if(found != null) {
-					if(first_only && found.length > 0) return [found[0]]; else results.concat(found);
-				}
-			}
-		}
-		return results;
-	}
-	,has: function(_name) {
-		return this.components.map.exists(_name);
-	}
-	,__class__: luxe_components_Components
+	return results;
 };
-var luxe_debug_DebugView = function(_debug) {
-	this.visible = false;
-	luxe_Objects.call(this);
-	this.debug = _debug;
+luxe_collision_Collision.rayWithShape = function(ray,shape) {
+	return shape.testRay(ray);
 };
-$hxClasses["luxe.debug.DebugView"] = luxe_debug_DebugView;
-luxe_debug_DebugView.__name__ = ["luxe","debug","DebugView"];
-luxe_debug_DebugView.__super__ = luxe_Objects;
-luxe_debug_DebugView.prototype = $extend(luxe_Objects.prototype,{
-	refresh: function() {
+luxe_collision_Collision.rayWithShapes = function(ray,shapes) {
+	var results = [];
+	var _g = 0;
+	while(_g < shapes.length) {
+		var shape = shapes[_g];
+		++_g;
+		var result = shape.testRay(ray);
+		if(result != null) results.push(result);
 	}
-	,process: function() {
-	}
-	,ontouchdown: function(e) {
-	}
-	,ontouchup: function(e) {
-	}
-	,ontouchmove: function(e) {
-	}
-	,onmousedown: function(e) {
-	}
-	,onmouseup: function(e) {
-	}
-	,onmousemove: function(e) {
-	}
-	,onmousewheel: function(e) {
-	}
-	,onkeydown: function(e) {
-	}
-	,onkeyup: function(e) {
-	}
-	,onwindowsized: function(e) {
-	}
-	,create: function() {
-	}
-	,show: function() {
-		this.visible = true;
-	}
-	,hide: function() {
-		this.visible = false;
-	}
-	,__class__: luxe_debug_DebugView
-});
-var luxe_debug_Inspector = function(_options) {
-	this.set_size(new phoenix_Vector(Std["int"](Luxe.core.screen.get_w() * 0.2),Std["int"](Luxe.core.screen.get_h() * 0.6)));
-	this.set_pos(new phoenix_Vector(Luxe.core.screen.get_w() / 2 - this.size.x / 2,Luxe.core.screen.get_h() / 2 - this.size.y / 2));
-	this.batcher = Luxe.renderer.batcher;
-	if(_options != null) {
-		if(_options.batcher != null) this.batcher = _options.batcher;
-		if(_options.size != null) this.set_size(_options.size);
-		if(_options.pos != null) this.set_pos(_options.pos);
-	}
+	return results;
 };
-$hxClasses["luxe.debug.Inspector"] = luxe_debug_Inspector;
-luxe_debug_Inspector.__name__ = ["luxe","debug","Inspector"];
-luxe_debug_Inspector.prototype = {
-	refresh: function() {
-		if(this.window == null) this.create_window();
-		if(this.onrefresh != null) this.onrefresh();
+luxe_collision_Collision.rayWithRay = function(ray1,ray2) {
+	return luxe_collision_sat_SAT2D.testRayVsRay(ray1,ray2);
+};
+luxe_collision_Collision.rayWithRays = function(ray,rays) {
+	var results = [];
+	var _g = 0;
+	while(_g < rays.length) {
+		var other = rays[_g];
+		++_g;
+		var result = luxe_collision_sat_SAT2D.testRayVsRay(ray,other);
+		if(result != null) results.push(result);
 	}
-	,show: function() {
-		this.refresh();
-		this.window.set_visible(true);
-		this.title.set_visible(true);
-		this.version.set_visible(true);
-	}
-	,hide: function() {
-		this.window.set_visible(false);
-		this.title.set_visible(false);
-		this.version.set_visible(false);
-	}
-	,set_size: function(_size) {
-		if(_size != null && this.window != null) {
-			this.window.set_size(_size);
-			this.window.geometry.set_dirty(true);
+	return results;
+};
+luxe_collision_Collision.pointInPoly = function(point,poly) {
+	var sides = poly.get_transformedVertices().length;
+	var i = 0;
+	var j = sides - 1;
+	var oddNodes = false;
+	var _g = 0;
+	while(_g < sides) {
+		var i1 = _g++;
+		if(poly.get_transformedVertices()[i1].y < point.y && poly.get_transformedVertices()[j].y >= point.y || poly.get_transformedVertices()[j].y < point.y && poly.get_transformedVertices()[i1].y >= point.y) {
+			if(poly.get_transformedVertices()[i1].x + (point.y - poly.get_transformedVertices()[i1].y) / (poly.get_transformedVertices()[j].y - poly.get_transformedVertices()[i1].y) * (poly.get_transformedVertices()[j].x - poly.get_transformedVertices()[i1].x) < point.x) oddNodes = !oddNodes;
 		}
-		if(this.version != null) this.version.set_pos(new phoenix_Vector(this.pos.x + (_size.x - 14),this.pos.y + 6));
-		return this.size = _size;
+		j = i1;
 	}
-	,set_pos: function(_pos) {
-		if(_pos != null && this.window != null) {
-			this.window.set_pos(_pos);
-			this.window.geometry.set_dirty(true);
-		}
-		if(this.title != null) this.title.set_pos(new phoenix_Vector(_pos.x + 14,_pos.y + 6));
-		if(this.version != null) this.version.set_pos(new phoenix_Vector(_pos.x + (this.size.x - 14),_pos.y + 6));
-		return this.pos = _pos;
-	}
-	,create_window: function() {
-		this.window = new luxe_Sprite({ name : "debug.window", batcher : this.batcher, no_scene : true, depth : 999.1, visible : false, color : new phoenix_Color().rgb(1447449), centered : false, size : this.size, pos : this.pos});
-		this.title = new luxe_Text({ name : "debug.title", batcher : this.batcher, no_scene : true, depth : 999.2, visible : false, color : new phoenix_Color().rgb(16121979), pos : new phoenix_Vector(this.pos.x + 14,this.pos.y + 6), text : "Inspector", point_size : 15, align : 0});
-		this.version = new luxe_Text({ name : "debug.version", batcher : this.batcher, no_scene : true, depth : 999.2, visible : false, color : new phoenix_Color().rgb(5526617), pos : new phoenix_Vector(this.pos.x + (this.size.x - 14),this.pos.y + 6), text : "" + Luxe.core.runtime_info(), point_size : 13, align : 1});
-		this.window.set_locked(true);
-		this.window.geometry.id = "debug.Inspector";
-		this.title.geometry.id = "debug.title.text";
-		this.version.geometry.id = "debug.version.text";
-	}
-	,__class__: luxe_debug_Inspector
-	,__properties__: {set_size:"set_size",set_pos:"set_pos"}
+	return oddNodes;
 };
 var phoenix_Color = function(_r,_g,_b,_a) {
 	if(_a == null) _a = 1.0;
@@ -8093,6 +7965,842 @@ phoenix_Color.prototype = {
 	}
 	,__class__: phoenix_Color
 	,__properties__: {set_b:"set_b",set_g:"set_g",set_r:"set_r"}
+};
+var luxe_collision_ShapeDrawerLuxe = function(_options) {
+	luxe_collision_ShapeDrawer.call(this);
+	this.options = _options;
+	if(this.options == null) this.options = { };
+	this.options;
+	if(this.options.immediate == null) this.options.immediate = true;
+	this.options.immediate;
+	if(this.options.depth == null) this.options.depth = 100;
+	this.options.depth;
+};
+$hxClasses["luxe.collision.ShapeDrawerLuxe"] = luxe_collision_ShapeDrawerLuxe;
+luxe_collision_ShapeDrawerLuxe.__name__ = ["luxe","collision","ShapeDrawerLuxe"];
+luxe_collision_ShapeDrawerLuxe.__super__ = luxe_collision_ShapeDrawer;
+luxe_collision_ShapeDrawerLuxe.prototype = $extend(luxe_collision_ShapeDrawer.prototype,{
+	drawCircle: function(circle) {
+		if(circle == null) throw new js__$Boot_HaxeError(luxe_DebugError.null_assertion("circle was null" + ""));
+		Luxe.draw.ring({ x : circle._position.x, y : circle._position.y, r : circle.get_transformedRadius(), color : luxe_collision_ShapeDrawerLuxe.color, depth : this.options.depth, immediate : this.options.immediate, batcher : this.options.batcher});
+	}
+	,drawLine: function(p0,p1,startPoint) {
+		if(startPoint == null) startPoint = true;
+		if(p0 == null) throw new js__$Boot_HaxeError(luxe_DebugError.null_assertion("p0 was null" + ""));
+		if(p1 == null) throw new js__$Boot_HaxeError(luxe_DebugError.null_assertion("p1 was null" + ""));
+		Luxe.draw.line({ p0 : new phoenix_Vector(p0.x,p0.y), p1 : new phoenix_Vector(p1.x,p1.y), color : luxe_collision_ShapeDrawerLuxe.color, depth : this.options.depth, immediate : this.options.immediate, batcher : this.options.batcher});
+	}
+	,__class__: luxe_collision_ShapeDrawerLuxe
+});
+var luxe_collision_data_RayCollision = function(_shape,_ray,_start,_end) {
+	this.ray = _ray;
+	this.shape = _shape;
+	this.start = _start;
+	this.end = _end;
+};
+$hxClasses["luxe.collision.data.RayCollision"] = luxe_collision_data_RayCollision;
+luxe_collision_data_RayCollision.__name__ = ["luxe","collision","data","RayCollision"];
+luxe_collision_data_RayCollision.prototype = {
+	__class__: luxe_collision_data_RayCollision
+};
+var luxe_collision_data_RayCollisionHelper = function() { };
+$hxClasses["luxe.collision.data.RayCollisionHelper"] = luxe_collision_data_RayCollisionHelper;
+luxe_collision_data_RayCollisionHelper.__name__ = ["luxe","collision","data","RayCollisionHelper"];
+luxe_collision_data_RayCollisionHelper.hitStart = function(data) {
+	var dir = data.ray.get_dir();
+	var offsetx = dir.x * data.start;
+	var offsety = dir.y * data.start;
+	return new phoenix_Vector(data.ray.start.x + offsetx,data.ray.start.y + offsety);
+};
+luxe_collision_data_RayCollisionHelper.hitEnd = function(data) {
+	var dir = data.ray.get_dir();
+	var offsetx = dir.x * data.end;
+	var offsety = dir.y * data.end;
+	return new phoenix_Vector(data.ray.start.x + offsetx,data.ray.start.y + offsety);
+};
+var luxe_collision_data_RayIntersection = function(ray1,u1,ray2,u2) {
+	this.ray1 = ray1;
+	this.ray2 = ray2;
+	this.u1 = u1;
+	this.u2 = u2;
+};
+$hxClasses["luxe.collision.data.RayIntersection"] = luxe_collision_data_RayIntersection;
+luxe_collision_data_RayIntersection.__name__ = ["luxe","collision","data","RayIntersection"];
+luxe_collision_data_RayIntersection.prototype = {
+	__class__: luxe_collision_data_RayIntersection
+};
+var luxe_collision_data_ShapeCollision = function() {
+	this.overlap = 0;
+	this.separation = new phoenix_Vector();
+	this.unitVector = new phoenix_Vector();
+};
+$hxClasses["luxe.collision.data.ShapeCollision"] = luxe_collision_data_ShapeCollision;
+luxe_collision_data_ShapeCollision.__name__ = ["luxe","collision","data","ShapeCollision"];
+luxe_collision_data_ShapeCollision.prototype = {
+	__class__: luxe_collision_data_ShapeCollision
+};
+var luxe_collision_sat_Common = function() { };
+$hxClasses["luxe.collision.sat.Common"] = luxe_collision_sat_Common;
+luxe_collision_sat_Common.__name__ = ["luxe","collision","sat","Common"];
+luxe_collision_sat_Common.findNormalAxis = function(vertices,index) {
+	var vector1 = vertices[index];
+	var vector2;
+	if(index >= vertices.length - 1) vector2 = vertices[0]; else vector2 = vertices[index + 1];
+	var normalAxis = new phoenix_Vector(-(vector2.y - vector1.y),vector2.x - vector1.x);
+	return normalAxis.divideScalar(Math.sqrt(normalAxis.x * normalAxis.x + normalAxis.y * normalAxis.y + normalAxis.z * normalAxis.z));
+};
+var luxe_collision_sat_SAT2D = function() { };
+$hxClasses["luxe.collision.sat.SAT2D"] = luxe_collision_sat_SAT2D;
+luxe_collision_sat_SAT2D.__name__ = ["luxe","collision","sat","SAT2D"];
+luxe_collision_sat_SAT2D.testCircleVsPolygon = function(circle,polygon,flip) {
+	if(flip == null) flip = false;
+	var ep = 0.0000000001;
+	var test1;
+	var test2;
+	var test;
+	var min1 = 0;
+	var max1 = 1073741823;
+	var min2 = 0;
+	var max2 = 1073741823;
+	var normalAxis = new phoenix_Vector();
+	var offset;
+	var vectorOffset = new phoenix_Vector();
+	var vectors;
+	var shortestDistance = 1073741823;
+	var collisionData = new luxe_collision_data_ShapeCollision();
+	var distMin;
+	var distance = -1;
+	var testDistance = 1073741823;
+	var closestVector = new phoenix_Vector();
+	vectorOffset = new phoenix_Vector(-circle._position.x,-circle._position.y);
+	var _this = polygon.get_transformedVertices();
+	vectors = _this.slice();
+	if(vectors.length == 2) {
+		var temp = new phoenix_Vector(-(vectors[1].y - vectors[0].y),vectors[1].x - vectors[0].x);
+		temp.set_length(Math.min(ep,Math.sqrt(temp.x * temp.x + temp.y * temp.y + temp.z * temp.z)));
+		temp;
+		vectors.push(vectors[1].clone().add(temp));
+	}
+	var _g1 = 0;
+	var _g = vectors.length;
+	while(_g1 < _g) {
+		var i = _g1++;
+		distance = (circle._position.x - vectors[i].x) * (circle._position.x - vectors[i].x) + (circle._position.y - vectors[i].y) * (circle._position.y - vectors[i].y);
+		if(distance < testDistance) {
+			testDistance = distance;
+			closestVector.set_x(vectors[i].x);
+			closestVector.set_y(vectors[i].y);
+		}
+	}
+	normalAxis = new phoenix_Vector(closestVector.x - circle._position.x,closestVector.y - circle._position.y);
+	normalAxis.divideScalar(Math.sqrt(normalAxis.x * normalAxis.x + normalAxis.y * normalAxis.y + normalAxis.z * normalAxis.z));
+	min1 = normalAxis.dot(vectors[0]);
+	max1 = min1;
+	var _g11 = 1;
+	var _g2 = vectors.length;
+	while(_g11 < _g2) {
+		var j = _g11++;
+		test = normalAxis.dot(vectors[j]);
+		if(test < min1) min1 = test;
+		if(test > max1) max1 = test;
+	}
+	max2 = circle.get_transformedRadius();
+	min2 -= circle.get_transformedRadius();
+	offset = normalAxis.x * vectorOffset.x + normalAxis.y * vectorOffset.y + normalAxis.z * vectorOffset.z;
+	min1 += offset;
+	max1 += offset;
+	test1 = min1 - max2;
+	test2 = min2 - max1;
+	if(test1 > 0 || test2 > 0) return null;
+	distMin = -(max2 - min1);
+	if(flip) distMin *= -1;
+	if(Math.abs(distMin) < shortestDistance) {
+		collisionData.unitVector = normalAxis;
+		collisionData.overlap = distMin;
+		shortestDistance = Math.abs(distMin);
+	}
+	var _g12 = 0;
+	var _g3 = vectors.length;
+	while(_g12 < _g3) {
+		var i1 = _g12++;
+		normalAxis = luxe_collision_sat_Common.findNormalAxis(vectors,i1);
+		min1 = normalAxis.dot(vectors[0]);
+		max1 = min1;
+		var _g31 = 1;
+		var _g21 = vectors.length;
+		while(_g31 < _g21) {
+			var j1 = _g31++;
+			test = normalAxis.dot(vectors[j1]);
+			if(test < min1) min1 = test;
+			if(test > max1) max1 = test;
+		}
+		max2 = circle.get_transformedRadius();
+		min2 = -circle.get_transformedRadius();
+		offset = normalAxis.x * vectorOffset.x + normalAxis.y * vectorOffset.y + normalAxis.z * vectorOffset.z;
+		min1 += offset;
+		max1 += offset;
+		test1 = min1 - max2;
+		test2 = min2 - max1;
+		if(test1 > 0 || test2 > 0) return null;
+		distMin = -(max2 - min1);
+		if(flip) distMin *= -1;
+		if(Math.abs(distMin) < shortestDistance) {
+			collisionData.unitVector = normalAxis;
+			collisionData.overlap = distMin;
+			shortestDistance = Math.abs(distMin);
+		}
+	}
+	if(flip) collisionData.shape2 = polygon; else collisionData.shape2 = circle;
+	if(flip) collisionData.shape1 = circle; else collisionData.shape1 = polygon;
+	collisionData.separation = new phoenix_Vector(-collisionData.unitVector.x * collisionData.overlap,-collisionData.unitVector.y * collisionData.overlap);
+	if(flip) collisionData.unitVector.invert();
+	return collisionData;
+};
+luxe_collision_sat_SAT2D.testCircleVsCircle = function(circle1,circle2) {
+	var totalRadius = circle1.get_transformedRadius() + circle2.get_transformedRadius();
+	var distancesq = (circle1._position.x - circle2._position.x) * (circle1._position.x - circle2._position.x) + (circle1._position.y - circle2._position.y) * (circle1._position.y - circle2._position.y);
+	if(distancesq < totalRadius * totalRadius) {
+		var difference = totalRadius - Math.sqrt(distancesq);
+		var collisionData = new luxe_collision_data_ShapeCollision();
+		collisionData.shape1 = circle1;
+		collisionData.shape2 = circle2;
+		collisionData.unitVector = new phoenix_Vector(circle1._position.x - circle2._position.x,circle1._position.y - circle2._position.y);
+		collisionData.unitVector.normalize();
+		collisionData.separation = new phoenix_Vector(collisionData.unitVector.x * difference,collisionData.unitVector.y * difference);
+		collisionData.overlap = collisionData.separation.get_length();
+		return collisionData;
+	}
+	return null;
+};
+luxe_collision_sat_SAT2D.testPolygonVsPolygon = function(polygon1,polygon2,flip) {
+	if(flip == null) flip = false;
+	var result1 = luxe_collision_sat_SAT2D.checkPolygons(polygon1,polygon2,flip);
+	if(result1 == null) return null;
+	var result2 = luxe_collision_sat_SAT2D.checkPolygons(polygon2,polygon1,!flip);
+	if(result2 == null) return null;
+	if(Math.abs(result1.overlap) < Math.abs(result2.overlap)) return result1; else return result2;
+};
+luxe_collision_sat_SAT2D.testRayVsCircle = function(ray,circle) {
+	var delta = ray.end.clone().subtract(ray.start);
+	var ray2circle = ray.start.clone().subtract(circle._position);
+	var a = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
+	var b = 2 * (delta.x * ray2circle.x + delta.y * ray2circle.y + delta.z * ray2circle.z);
+	var c = ray2circle.x * ray2circle.x + ray2circle.y * ray2circle.y + ray2circle.z * ray2circle.z - circle.get_radius() * circle.get_radius();
+	var d = b * b - 4 * a * c;
+	if(d >= 0) {
+		d = Math.sqrt(d);
+		var t1 = (-b - d) / (2 * a);
+		var t2 = (-b + d) / (2 * a);
+		if(ray.infinite || t1 <= 1.0 && t1 >= 0.0) return new luxe_collision_data_RayCollision(circle,ray,t1,t2);
+	}
+	return null;
+};
+luxe_collision_sat_SAT2D.testRayVsPolygon = function(ray,polygon) {
+	var delta = ray.end.clone().subtract(ray.start);
+	var vertices = polygon.get_transformedVertices();
+	var min_u = Infinity;
+	var max_u = 0.0;
+	if(vertices.length > 2) {
+		var v1 = vertices[vertices.length - 1];
+		var v2 = vertices[0];
+		var r = luxe_collision_sat_SAT2D.intersectRayRay(ray.start,delta,v1,new phoenix_Vector(v2.x,v2.y,v2.z,v2.w).subtract(v1));
+		if(r != null && r.ub >= 0.0 && r.ub <= 1.0) {
+			if(r.ua < min_u) min_u = r.ua;
+			if(r.ua > max_u) max_u = r.ua;
+		}
+		var _g1 = 1;
+		var _g = vertices.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			v1 = vertices[i - 1];
+			v2 = vertices[i];
+			r = luxe_collision_sat_SAT2D.intersectRayRay(ray.start,delta,v1,new phoenix_Vector(v2.x,v2.y,v2.z,v2.w).subtract(v1));
+			if(r != null && r.ub >= 0.0 && r.ub <= 1.0) {
+				if(r.ua < min_u) min_u = r.ua;
+				if(r.ua > max_u) max_u = r.ua;
+			}
+		}
+		if(ray.infinite || min_u <= 1.0 && min_u >= 0.0) return new luxe_collision_data_RayCollision(polygon,ray,min_u,max_u);
+	}
+	return null;
+};
+luxe_collision_sat_SAT2D.testRayVsRay = function(ray1,ray2) {
+	var delta1 = ray1.end.clone().subtract(ray1.start);
+	var delta2 = ray2.end.clone().subtract(ray2.start);
+	var dx = ray1.start.clone().subtract(ray2.start);
+	var d = delta2.y * delta1.x - delta2.x * delta1.y;
+	if(d == 0.0) return null;
+	var u1 = (delta2.x * dx.y - delta2.y * dx.x) / d;
+	var u2 = (delta1.x * dx.y - delta1.y * dx.x) / d;
+	if((ray1.infinite || u1 <= 1.0) && (ray2.infinite || u2 <= 1.0)) return new luxe_collision_data_RayIntersection(ray1,u1,ray2,u2);
+	return null;
+};
+luxe_collision_sat_SAT2D.bresenhamLine = function(start,end) {
+	var points = [];
+	var steep = Math.abs(end.y - start.y) > Math.abs(end.x - start.x);
+	var swapped = false;
+	if(steep) {
+		start = new phoenix_Vector(start.y,start.x);
+		end = new phoenix_Vector(end.y,end.x);
+	}
+	if(start.x > end.x) {
+		var t = start.x;
+		start.set_x(end.x);
+		end.x = t;
+		if(end._construct) end.x; else {
+			if(end.listen_x != null && !end.ignore_listeners) end.listen_x(t);
+			end.x;
+		}
+		t = start.y;
+		start.set_y(end.y);
+		end.y = t;
+		if(end._construct) end.y; else {
+			if(end.listen_y != null && !end.ignore_listeners) end.listen_y(t);
+			end.y;
+		}
+		swapped = true;
+	}
+	var deltax = end.x - start.x;
+	var deltay = Math.abs(end.y - start.y);
+	var error = deltax / 2;
+	var ystep;
+	var y = start.y;
+	if(start.y < end.y) ystep = 1; else ystep = -1;
+	var x = start.x | 0;
+	var _g1 = start.x | 0;
+	var _g = end.x | 0;
+	while(_g1 < _g) {
+		var x1 = _g1++;
+		if(steep) points.push(new phoenix_Vector(y,x1)); else points.push(new phoenix_Vector(x1,y));
+		error -= deltay;
+		if(error < 0) {
+			y += ystep;
+			error += deltax;
+		}
+	}
+	if(swapped) points.reverse();
+	return points;
+};
+luxe_collision_sat_SAT2D.checkPolygons = function(polygon1,polygon2,flip) {
+	if(flip == null) flip = false;
+	var ep = 0.0000000001;
+	var test1;
+	var test2;
+	var testNum;
+	var min1;
+	var max1;
+	var min2;
+	var max2;
+	var axis;
+	var offset;
+	var vectors1;
+	var vectors2;
+	var shortestDistance = 1073741823;
+	var collisionData = new luxe_collision_data_ShapeCollision();
+	var _this = polygon1.get_transformedVertices();
+	vectors1 = _this.slice();
+	var _this1 = polygon2.get_transformedVertices();
+	vectors2 = _this1.slice();
+	if(vectors1.length == 2) {
+		var temp = new phoenix_Vector(-(vectors1[1].y - vectors1[0].y),vectors1[1].x - vectors1[0].x);
+		temp.set_length(Math.min(ep,Math.sqrt(temp.x * temp.x + temp.y * temp.y + temp.z * temp.z)));
+		temp;
+		vectors1.push(vectors1[1].add(temp));
+	}
+	if(vectors2.length == 2) {
+		var temp1 = new phoenix_Vector(-(vectors2[1].y - vectors2[0].y),vectors2[1].x - vectors2[0].x);
+		temp1.set_length(Math.min(ep,Math.sqrt(temp1.x * temp1.x + temp1.y * temp1.y + temp1.z * temp1.z)));
+		temp1;
+		vectors2.push(vectors2[1].add(temp1));
+	}
+	var _g1 = 0;
+	var _g = vectors1.length;
+	while(_g1 < _g) {
+		var i = _g1++;
+		axis = luxe_collision_sat_Common.findNormalAxis(vectors1,i);
+		min1 = axis.dot(vectors1[0]);
+		max1 = min1;
+		var _g3 = 1;
+		var _g2 = vectors1.length;
+		while(_g3 < _g2) {
+			var j = _g3++;
+			testNum = axis.dot(vectors1[j]);
+			if(testNum < min1) min1 = testNum;
+			if(testNum > max1) max1 = testNum;
+		}
+		min2 = axis.dot(vectors2[0]);
+		max2 = min2;
+		var _g31 = 1;
+		var _g21 = vectors2.length;
+		while(_g31 < _g21) {
+			var j1 = _g31++;
+			testNum = axis.dot(vectors2[j1]);
+			if(testNum < min2) min2 = testNum;
+			if(testNum > max2) max2 = testNum;
+		}
+		test1 = min1 - max2;
+		test2 = min2 - max1;
+		if(test1 > 0 || test2 > 0) return null;
+		var distMin = -(max2 - min1);
+		if(flip) distMin *= -1;
+		if(Math.abs(distMin) < shortestDistance) {
+			collisionData.unitVector = axis;
+			collisionData.overlap = distMin;
+			shortestDistance = Math.abs(distMin);
+		}
+	}
+	if(flip) collisionData.shape1 = polygon2; else collisionData.shape1 = polygon1;
+	if(flip) collisionData.shape2 = polygon1; else collisionData.shape2 = polygon2;
+	collisionData.separation = new phoenix_Vector(-collisionData.unitVector.x * collisionData.overlap,-collisionData.unitVector.y * collisionData.overlap);
+	if(flip) collisionData.unitVector.invert();
+	return collisionData;
+};
+luxe_collision_sat_SAT2D.swap = function(v) {
+	return new phoenix_Vector(v.y,v.x);
+};
+luxe_collision_sat_SAT2D.intersectRayRay = function(a,adelta,b,bdelta) {
+	var dx = new phoenix_Vector(a.x,a.y,a.z,a.w).subtract(b);
+	var d = bdelta.y * adelta.x - bdelta.x * adelta.y;
+	if(d == 0.0) return null;
+	var ua = (bdelta.x * dx.y - bdelta.y * dx.x) / d;
+	var ub = (adelta.x * dx.y - adelta.y * dx.x) / d;
+	return { ua : ua, ub : ub};
+};
+var luxe_collision_shapes_Shape = function(_x,_y) {
+	this._transformed = false;
+	this._scaleY = 1;
+	this._scaleX = 1;
+	this._rotation_radians = 0;
+	this._rotation = 0;
+	this.name = "shape";
+	this.active = true;
+	this.tags = new haxe_ds_StringMap();
+	this._position = new phoenix_Vector(_x,_y);
+	this._scale = new phoenix_Vector(1,1);
+	this._rotation_quat = new phoenix_Quaternion();
+	this._rotation = 0;
+	this._scaleX = 1;
+	this._scaleY = 1;
+	phoenix_Vector.Listen(this._position,$bind(this,this._pos_changed));
+	this._transformMatrix = new phoenix_Matrix();
+	this._transformMatrix.makeTranslation(this._position.x,this._position.y,0);
+};
+$hxClasses["luxe.collision.shapes.Shape"] = luxe_collision_shapes_Shape;
+luxe_collision_shapes_Shape.__name__ = ["luxe","collision","shapes","Shape"];
+luxe_collision_shapes_Shape.prototype = {
+	test: function(shape) {
+		return null;
+	}
+	,testCircle: function(circle,flip) {
+		if(flip == null) flip = false;
+		return null;
+	}
+	,testPolygon: function(polygon,flip) {
+		if(flip == null) flip = false;
+		return null;
+	}
+	,testRay: function(ray) {
+		return null;
+	}
+	,destroy: function() {
+		this._position = null;
+		this._scale = null;
+		this._transformMatrix = null;
+		this._rotation_quat = null;
+	}
+	,refresh_transform: function() {
+		this._rotation_quat.setFromEuler(new phoenix_Vector(0,0,this._rotation_radians));
+		this._transformMatrix.compose(this._position,this._rotation_quat,this._scale);
+		this._transformed = false;
+	}
+	,get_position: function() {
+		return this._position;
+	}
+	,set_position: function(v) {
+		this._position = v;
+		this.refresh_transform();
+		if(this._position != null) phoenix_Vector.Listen(this._position,$bind(this,this._pos_changed));
+		return this._position;
+	}
+	,get_x: function() {
+		return this._position.x;
+	}
+	,set_x: function(x) {
+		this._position.ignore_listeners = true;
+		this._position.set_x(x);
+		this.refresh_transform();
+		this._position.ignore_listeners = false;
+		return this._position.x;
+	}
+	,get_y: function() {
+		return this._position.y;
+	}
+	,set_y: function(y) {
+		this._position.ignore_listeners = true;
+		this._position.set_y(y);
+		this.refresh_transform();
+		this._position.ignore_listeners = false;
+		return this._position.y;
+	}
+	,get_rotation: function() {
+		return this._rotation;
+	}
+	,set_rotation: function(v) {
+		this._rotation_radians = v * (Math.PI / 180);
+		this.refresh_transform();
+		return this._rotation = v;
+	}
+	,get_scaleX: function() {
+		return this._scaleX;
+	}
+	,set_scaleX: function(scale) {
+		this._scaleX = scale;
+		this._scale.set_x(this._scaleX);
+		this.refresh_transform();
+		return this._scaleX;
+	}
+	,get_scaleY: function() {
+		return this._scaleY;
+	}
+	,set_scaleY: function(scale) {
+		this._scaleY = scale;
+		this._scale.set_y(this._scaleY);
+		this.refresh_transform();
+		return this._scaleY;
+	}
+	,_pos_changed: function(_) {
+		this.refresh_transform();
+	}
+	,__class__: luxe_collision_shapes_Shape
+	,__properties__: {set_scaleY:"set_scaleY",get_scaleY:"get_scaleY",set_scaleX:"set_scaleX",get_scaleX:"get_scaleX",set_rotation:"set_rotation",get_rotation:"get_rotation",set_y:"set_y",get_y:"get_y",set_x:"set_x",get_x:"get_x",set_position:"set_position",get_position:"get_position"}
+};
+var luxe_collision_shapes_Circle = function(x,y,radius) {
+	luxe_collision_shapes_Shape.call(this,x,y);
+	this._radius = radius;
+	this.name = "circle " + this._radius;
+};
+$hxClasses["luxe.collision.shapes.Circle"] = luxe_collision_shapes_Circle;
+luxe_collision_shapes_Circle.__name__ = ["luxe","collision","shapes","Circle"];
+luxe_collision_shapes_Circle.__super__ = luxe_collision_shapes_Shape;
+luxe_collision_shapes_Circle.prototype = $extend(luxe_collision_shapes_Shape.prototype,{
+	test: function(shape) {
+		return shape.testCircle(this,true);
+	}
+	,testCircle: function(circle,flip) {
+		if(flip == null) flip = false;
+		var c1;
+		if(flip) c1 = circle; else c1 = this;
+		var c2;
+		if(flip) c2 = this; else c2 = circle;
+		return luxe_collision_sat_SAT2D.testCircleVsCircle(c1,c2);
+	}
+	,testPolygon: function(polygon,flip) {
+		if(flip == null) flip = false;
+		return luxe_collision_sat_SAT2D.testCircleVsPolygon(this,polygon,flip);
+	}
+	,testRay: function(ray) {
+		return luxe_collision_sat_SAT2D.testRayVsCircle(ray,this);
+	}
+	,get_radius: function() {
+		return this._radius;
+	}
+	,get_transformedRadius: function() {
+		return this._radius * this._scaleX;
+	}
+	,__class__: luxe_collision_shapes_Circle
+	,__properties__: $extend(luxe_collision_shapes_Shape.prototype.__properties__,{get_transformedRadius:"get_transformedRadius",get_radius:"get_radius"})
+});
+var luxe_collision_shapes_Polygon = function(x,y,vertices) {
+	luxe_collision_shapes_Shape.call(this,x,y);
+	this.name = "polygon(sides:" + vertices.length + ")";
+	this._transformedVertices = [];
+	this._vertices = vertices;
+};
+$hxClasses["luxe.collision.shapes.Polygon"] = luxe_collision_shapes_Polygon;
+luxe_collision_shapes_Polygon.__name__ = ["luxe","collision","shapes","Polygon"];
+luxe_collision_shapes_Polygon.create = function(x,y,sides,radius) {
+	if(radius == null) radius = 100;
+	if(sides < 3) throw new js__$Boot_HaxeError("Polygon - Needs at least 3 sides");
+	var rotation = Math.PI * 2 / sides;
+	var angle;
+	var vector;
+	var vertices = [];
+	var _g = 0;
+	while(_g < sides) {
+		var i = _g++;
+		angle = i * rotation + (Math.PI - rotation) * 0.5;
+		vector = new phoenix_Vector();
+		vector.set_x(Math.cos(angle) * radius);
+		vector.set_y(Math.sin(angle) * radius);
+		vertices.push(vector);
+	}
+	return new luxe_collision_shapes_Polygon(x,y,vertices);
+};
+luxe_collision_shapes_Polygon.rectangle = function(x,y,width,height,centered) {
+	if(centered == null) centered = true;
+	var vertices = [];
+	if(centered) {
+		vertices.push(new phoenix_Vector(-width / 2,-height / 2));
+		vertices.push(new phoenix_Vector(width / 2,-height / 2));
+		vertices.push(new phoenix_Vector(width / 2,height / 2));
+		vertices.push(new phoenix_Vector(-width / 2,height / 2));
+	} else {
+		vertices.push(new phoenix_Vector(0,0));
+		vertices.push(new phoenix_Vector(width,0));
+		vertices.push(new phoenix_Vector(width,height));
+		vertices.push(new phoenix_Vector(0,height));
+	}
+	return new luxe_collision_shapes_Polygon(x,y,vertices);
+};
+luxe_collision_shapes_Polygon.square = function(x,y,width,centered) {
+	if(centered == null) centered = true;
+	return luxe_collision_shapes_Polygon.rectangle(x,y,width,width,centered);
+};
+luxe_collision_shapes_Polygon.triangle = function(x,y,radius) {
+	return luxe_collision_shapes_Polygon.create(x,y,3,radius);
+};
+luxe_collision_shapes_Polygon.__super__ = luxe_collision_shapes_Shape;
+luxe_collision_shapes_Polygon.prototype = $extend(luxe_collision_shapes_Shape.prototype,{
+	test: function(shape) {
+		return shape.testPolygon(this,true);
+	}
+	,testCircle: function(circle,flip) {
+		if(flip == null) flip = false;
+		return luxe_collision_sat_SAT2D.testCircleVsPolygon(circle,this,flip);
+	}
+	,testPolygon: function(polygon,flip) {
+		if(flip == null) flip = false;
+		return luxe_collision_sat_SAT2D.testPolygonVsPolygon(this,polygon,flip);
+	}
+	,testRay: function(ray) {
+		return luxe_collision_sat_SAT2D.testRayVsPolygon(ray,this);
+	}
+	,destroy: function() {
+		var _count = this._vertices.length;
+		var _g = 0;
+		while(_g < _count) {
+			var i = _g++;
+			this._vertices[i] = null;
+		}
+		this._transformedVertices = null;
+		this._vertices = null;
+		luxe_collision_shapes_Shape.prototype.destroy.call(this);
+	}
+	,get_transformedVertices: function() {
+		if(!this._transformed) {
+			this._transformedVertices = [];
+			this._transformed = true;
+			var _count = this._vertices.length;
+			var _g = 0;
+			while(_g < _count) {
+				var i = _g++;
+				this._transformedVertices.push(this._vertices[i].clone().transform(this._transformMatrix));
+			}
+		}
+		return this._transformedVertices;
+	}
+	,get_vertices: function() {
+		return this._vertices;
+	}
+	,__class__: luxe_collision_shapes_Polygon
+	,__properties__: $extend(luxe_collision_shapes_Shape.prototype.__properties__,{get_vertices:"get_vertices",get_transformedVertices:"get_transformedVertices"})
+});
+var luxe_collision_shapes_Ray = function(_start,_end,_infinite) {
+	if(_infinite == null) _infinite = true;
+	this.start = _start;
+	this.end = _end;
+	this.infinite = _infinite;
+	this.dir_cache = new phoenix_Vector(this.end.x - this.start.x,this.end.y - this.start.y);
+};
+$hxClasses["luxe.collision.shapes.Ray"] = luxe_collision_shapes_Ray;
+luxe_collision_shapes_Ray.__name__ = ["luxe","collision","shapes","Ray"];
+luxe_collision_shapes_Ray.prototype = {
+	get_dir: function() {
+		this.dir_cache.set_x(this.end.x - this.start.x);
+		this.dir_cache.set_y(this.end.y - this.start.y);
+		return this.dir_cache;
+	}
+	,__class__: luxe_collision_shapes_Ray
+	,__properties__: {get_dir:"get_dir"}
+};
+var luxe_components_Components = function(_entity) {
+	var _map = new haxe_ds_StringMap();
+	this.components = new luxe_structural_OrderedMap_$String_$luxe_$Component(_map);
+	this.entity = _entity;
+};
+$hxClasses["luxe.components.Components"] = luxe_components_Components;
+luxe_components_Components.__name__ = ["luxe","components","Components"];
+luxe_components_Components.prototype = {
+	destroy: function() {
+		this.components.map = null;
+		this.components = null;
+		this.entity = null;
+	}
+	,add: function(_component) {
+		if(_component == null) {
+			haxe_Log.trace("attempt to add null component to " + this.entity.get_name(),{ fileName : "Components.hx", lineNumber : 36, className : "luxe.components.Components", methodName : "add"});
+			return _component;
+		}
+		_component.set_entity(this.entity);
+		this.components.set(_component.name,_component);
+		_component.onadded();
+		if(this.entity.inited) _component.init();
+		if(this.entity.started) _component.onreset();
+		return _component;
+	}
+	,remove: function(_name) {
+		if(!this.components.map.exists(_name)) {
+			haxe_Log.trace("attempt to remove " + _name + " from " + this.entity.get_name() + " failed because that component was not attached to this entity",{ fileName : "Components.hx", lineNumber : 69, className : "luxe.components.Components", methodName : "remove"});
+			return false;
+		}
+		var _component = this.components.map.get(_name);
+		_component.onremoved();
+		_component.set_entity(null);
+		return this.components.remove(_name);
+	}
+	,get: function(_name,in_children) {
+		if(in_children == null) in_children = false;
+		if(!in_children) return this.components.map.get(_name); else {
+			var in_this_entity = this.components.map.get(_name);
+			if(in_this_entity != null) return in_this_entity;
+			var _g = 0;
+			var _g1 = this.entity.children;
+			while(_g < _g1.length) {
+				var _child = _g1[_g];
+				++_g;
+				var found = _child._components.get(_name,true);
+				if(found != null) return found;
+			}
+			return null;
+		}
+		return null;
+	}
+	,get_any: function(_name,in_children,first_only) {
+		if(first_only == null) first_only = true;
+		if(in_children == null) in_children = false;
+		var results = [];
+		if(!in_children) return [this.components.map.get(_name)]; else {
+			var in_this_entity = this.components.map.get(_name);
+			if(in_this_entity != null) {
+				if(first_only) return [in_this_entity]; else results.push(in_this_entity);
+			}
+			var _g = 0;
+			var _g1 = this.entity.children;
+			while(_g < _g1.length) {
+				var _child = _g1[_g];
+				++_g;
+				var found = _child._components.get_any(_name,true,first_only);
+				if(found != null) {
+					if(first_only && found.length > 0) return [found[0]]; else results.concat(found);
+				}
+			}
+		}
+		return results;
+	}
+	,has: function(_name) {
+		return this.components.map.exists(_name);
+	}
+	,__class__: luxe_components_Components
+};
+var luxe_debug_DebugView = function(_debug) {
+	this.visible = false;
+	luxe_Objects.call(this);
+	this.debug = _debug;
+};
+$hxClasses["luxe.debug.DebugView"] = luxe_debug_DebugView;
+luxe_debug_DebugView.__name__ = ["luxe","debug","DebugView"];
+luxe_debug_DebugView.__super__ = luxe_Objects;
+luxe_debug_DebugView.prototype = $extend(luxe_Objects.prototype,{
+	refresh: function() {
+	}
+	,process: function() {
+	}
+	,ontouchdown: function(e) {
+	}
+	,ontouchup: function(e) {
+	}
+	,ontouchmove: function(e) {
+	}
+	,onmousedown: function(e) {
+	}
+	,onmouseup: function(e) {
+	}
+	,onmousemove: function(e) {
+	}
+	,onmousewheel: function(e) {
+	}
+	,onkeydown: function(e) {
+	}
+	,onkeyup: function(e) {
+	}
+	,onwindowsized: function(e) {
+	}
+	,create: function() {
+	}
+	,show: function() {
+		this.visible = true;
+	}
+	,hide: function() {
+		this.visible = false;
+	}
+	,__class__: luxe_debug_DebugView
+});
+var luxe_debug_Inspector = function(_options) {
+	this.set_size(new phoenix_Vector(Std["int"](Luxe.core.screen.get_w() * 0.2),Std["int"](Luxe.core.screen.get_h() * 0.6)));
+	this.set_pos(new phoenix_Vector(Luxe.core.screen.get_w() / 2 - this.size.x / 2,Luxe.core.screen.get_h() / 2 - this.size.y / 2));
+	this.batcher = Luxe.renderer.batcher;
+	if(_options != null) {
+		if(_options.batcher != null) this.batcher = _options.batcher;
+		if(_options.size != null) this.set_size(_options.size);
+		if(_options.pos != null) this.set_pos(_options.pos);
+	}
+};
+$hxClasses["luxe.debug.Inspector"] = luxe_debug_Inspector;
+luxe_debug_Inspector.__name__ = ["luxe","debug","Inspector"];
+luxe_debug_Inspector.prototype = {
+	refresh: function() {
+		if(this.window == null) this.create_window();
+		if(this.onrefresh != null) this.onrefresh();
+	}
+	,show: function() {
+		this.refresh();
+		this.window.set_visible(true);
+		this.title.set_visible(true);
+		this.version.set_visible(true);
+	}
+	,hide: function() {
+		this.window.set_visible(false);
+		this.title.set_visible(false);
+		this.version.set_visible(false);
+	}
+	,set_size: function(_size) {
+		if(_size != null && this.window != null) {
+			this.window.set_size(_size);
+			this.window.geometry.set_dirty(true);
+		}
+		if(this.version != null) this.version.set_pos(new phoenix_Vector(this.pos.x + (_size.x - 14),this.pos.y + 6));
+		return this.size = _size;
+	}
+	,set_pos: function(_pos) {
+		if(_pos != null && this.window != null) {
+			this.window.set_pos(_pos);
+			this.window.geometry.set_dirty(true);
+		}
+		if(this.title != null) this.title.set_pos(new phoenix_Vector(_pos.x + 14,_pos.y + 6));
+		if(this.version != null) this.version.set_pos(new phoenix_Vector(_pos.x + (this.size.x - 14),_pos.y + 6));
+		return this.pos = _pos;
+	}
+	,create_window: function() {
+		this.window = new luxe_Sprite({ name : "debug.window", batcher : this.batcher, no_scene : true, depth : 999.1, visible : false, color : new phoenix_Color().rgb(1447449), centered : false, size : this.size, pos : this.pos});
+		this.title = new luxe_Text({ name : "debug.title", batcher : this.batcher, no_scene : true, depth : 999.2, visible : false, color : new phoenix_Color().rgb(16121979), pos : new phoenix_Vector(this.pos.x + 14,this.pos.y + 6), text : "Inspector", point_size : 15, align : 0});
+		this.version = new luxe_Text({ name : "debug.version", batcher : this.batcher, no_scene : true, depth : 999.2, visible : false, color : new phoenix_Color().rgb(5526617), pos : new phoenix_Vector(this.pos.x + (this.size.x - 14),this.pos.y + 6), text : "" + Luxe.core.runtime_info(), point_size : 13, align : 1});
+		this.window.set_locked(true);
+		this.window.geometry.id = "debug.Inspector";
+		this.title.geometry.id = "debug.title.text";
+		this.version.geometry.id = "debug.version.text";
+	}
+	,__class__: luxe_debug_Inspector
+	,__properties__: {set_size:"set_size",set_pos:"set_pos"}
 };
 var luxe_debug_ProfilerDebugView = function(_debug) {
 	this._setup = false;
@@ -20173,7 +20881,7 @@ snow_core_web_Runtime.prototype = {
 			if(_gl == null) _gl = this.window.getContext("experimental-webgl" + config.webgl.version);
 		} else _gl = js_html__$CanvasElement_CanvasUtil.getContextWebGL(this.window,attr);
 		snow_modules_opengl_web_GL.gl = _gl;
-		haxe_Log.trace("  i / runtime / " + ("web / GL / context(" + Std.string(_gl) + ")"),{ fileName : "Runtime.hx", lineNumber : 627, className : "snow.core.web.Runtime", methodName : "create_render_context"});
+		haxe_Log.trace("  i / runtime / " + ("web / GL / context(" + Std.string(_gl != null) + ")"),{ fileName : "Runtime.hx", lineNumber : 627, className : "snow.core.web.Runtime", methodName : "create_render_context"});
 		return _gl != null;
 	}
 	,apply_GL_attr: function(render,attr) {
@@ -22013,13 +22721,11 @@ snow_systems_audio_Audio.prototype = {
 	}
 	,suspend: function() {
 		if(!this.active) return;
-		haxe_Log.trace("    i / audio / " + "suspending sound context",{ fileName : "Audio.hx", lineNumber : 152, className : "snow.systems.audio.Audio", methodName : "suspend"});
 		this.active = false;
 		this.module.suspend();
 	}
 	,resume: function() {
 		if(this.active || !this.module.active) return;
-		haxe_Log.trace("    i / audio / " + "resuming sound context",{ fileName : "Audio.hx", lineNumber : 164, className : "snow.systems.audio.Audio", methodName : "resume"});
 		this.active = true;
 		this.module.resume();
 	}
@@ -23616,6 +24322,7 @@ luxe_Tag.scene = "core.scene";
 luxe_Log._level = 1;
 luxe_Log._log_width = 16;
 luxe_Physics.tag_physics = "physics";
+luxe_collision_ShapeDrawerLuxe.color = new phoenix_Color().rgb(16121979);
 luxe_debug_ProfilerDebugView.color_red = new phoenix_Color().rgb(13369344);
 luxe_debug_ProfilerDebugView.color_green = new phoenix_Color().rgb(2263108);
 luxe_debug_ProfilerDebugView.color_normal = new phoenix_Color().rgb(15790320);

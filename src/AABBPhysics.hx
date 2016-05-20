@@ -64,30 +64,33 @@ class AABBPhysics extends PhysicsEngine
 
         for( segment in segmentTests )
         {
-            var hit = intersectSegment(segment.origin, segment.delta);
-            if( hit.hit )
+            for( rect in staticBodies )
             {
-                Luxe.draw.line({
-                    immediate: true,
-                    p0: hit.pos,
-                    p1: new Vector(segment.origin.x + segment.delta.x, segment.origin.y + segment.delta.y),
-                    color: new Color(1, 1, 0, 1)
-                });
-                Luxe.draw.line({
-                    immediate: true,
-                    p0: segment.origin,
-                    p1: hit.pos,
-                    color: new Color(1, 0, 0, 1)
-                });
-            }
-            if( !hit.hit )
-            {
-                Luxe.draw.line({
-                    immediate: true,
-                    p0: segment.origin,
-                    p1: new Vector(segment.origin.x + segment.delta.x, segment.origin.y + segment.delta.y),
-                    color: new Color(0, 1, 0, 1)
-                });
+                var hit = rect.intersectSegment(segment.origin, segment.delta);
+                if( hit.hit )
+                {
+                    Luxe.draw.line({
+                        immediate: true,
+                        p0: hit.pos,
+                        p1: new Vector(segment.origin.x + segment.delta.x, segment.origin.y + segment.delta.y),
+                        color: new Color(1, 1, 0, 1)
+                    });
+                    Luxe.draw.line({
+                        immediate: true,
+                        p0: segment.origin,
+                        p1: hit.pos,
+                        color: new Color(1, 0, 0, 1)
+                    });
+                }
+                if( !hit.hit )
+                {
+                    Luxe.draw.line({
+                        immediate: true,
+                        p0: segment.origin,
+                        p1: new Vector(segment.origin.x + segment.delta.x, segment.origin.y + segment.delta.y),
+                        color: new Color(0, 1, 0, 1)
+                    });
+                }
             }
         }
         segmentTests = new Array<{origin:Vector, delta:Vector}>();
@@ -104,7 +107,7 @@ class AABBPhysics extends PhysicsEngine
         return hits;
     }
 
-    public function intersectSegment(origin:Vector, delta:Vector) : HitStatic
+    public function intersectSegment(origin:Vector, delta:Vector) : Array<HitStatic>
     {
         var hits:Array<HitStatic> = new Array<HitStatic>();
         segmentTests.push({origin:origin, delta:delta});
@@ -112,21 +115,6 @@ class AABBPhysics extends PhysicsEngine
         {
             hits.push(rect.intersectSegment(origin, delta));
         }
-        if (hits.length > 1)
-        {
-            var bestHit:HitStatic = hits[0];
-            for( hit in hits )
-            {
-                if (hit.time < bestHit.time)
-                {
-                    bestHit = hit;
-                }
-            }
-            return bestHit;
-        }
-        else
-        {
-            return hits[0];
-        }
+        return hits;
     }
 }
